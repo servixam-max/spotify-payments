@@ -49,10 +49,6 @@
       gap: 6px;
       flex-shrink: 0;
     }
-    .action-btn.secondary {
-      background: #3e3e3e;
-      color: white;
-    }
     
     .view-toggle {
       margin: 0 20px 20px;
@@ -132,7 +128,7 @@
       margin-bottom: 15px;
     }
     .member-name { font-size: 20px; font-weight: 700; }
-    .member-total { font-size: 13px; color: #b3b3b3; }
+    .member-total { font-size: 13px; color: #b3b3b3; margin-top: 4px; }
     .member-total strong { color: #1DB954; }
     .status-badge {
       padding: 6px 12px;
@@ -151,7 +147,6 @@
       margin-bottom: 15px;
     }
     .payment-info p { font-size: 13px; color: #b3b3b3; margin-bottom: 8px; }
-    .payment-info p:last-child { margin-bottom: 0; }
     .payment-info strong { color: white; }
     
     .btn {
@@ -200,8 +195,9 @@
       padding: 15px;
     }
     .yearly-member h3 { font-size: 16px; margin-bottom: 10px; }
-    .yearly-stats { display: flex; gap: 15px; font-size: 13px; color: #b3b3b3; }
-    .yearly-stats span strong { color: #1DB954; }
+    .yearly-stats { display: flex; gap: 15px; font-size: 13px; color: #b3b3b3; flex-wrap: wrap; }
+    .yearly-stats span { background: #121212; padding: 8px 12px; border-radius: 6px; }
+    .yearly-stats strong { color: #1DB954; font-size: 16px; }
     
     .modal {
       display: none;
@@ -249,12 +245,12 @@
       font-size: 12px;
       color: #b3b3b3;
     }
-    .history-item .method {
-      padding: 2px 6px;
+    .method-badge {
+      padding: 2px 8px;
       border-radius: 4px;
       font-size: 10px;
-      text-transform: uppercase;
       font-weight: 600;
+      text-transform: uppercase;
     }
     .method-bizum { background: #1DB954; color: black; }
     .method-transferencia { background: #3498db; color: white; }
@@ -282,14 +278,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { color: white; font-size: 14px; }
-    
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #666;
-    }
-    .empty-state h3 { font-size: 18px; margin-bottom: 10px; color: #b3b3b3; }
-    .empty-state p { font-size: 14px; }
   </style>
 </head>
 <body>
@@ -303,9 +291,7 @@
       <span class="status-dot" id="statusDot"></span>
       <span class="status-text" id="statusText">Conectando...</span>
     </div>
-    <button class="action-btn" onclick="exportCSV()">
-      📤 Exportar
-    </button>
+    <button class="action-btn" onclick="exportCSV()">📤 Exportar</button>
   </div>
 
   <div class="view-toggle">
@@ -339,10 +325,6 @@
       </div>
     </div>
 
-    <div id="loading" style="text-align:center;padding:40px;color:#666;">
-      <div class="spinner" style="margin:0 auto 20px; width:50px; height:50px;"></div>
-      Cargando datos...
-    </div>
     <div id="membersList"></div>
   </div>
 
@@ -377,7 +359,7 @@
         <option value="Otro">Otro</option>
       </select>
       <label>Notas (opcional)</label>
-      <input type="text" id="paymentNotes" placeholder="Ej: Bizum, Transferencia...">
+      <input type="text" id="paymentNotes" placeholder="Ej: Mes de marzo...">
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
         <button class="btn-confirm" onclick="confirmPayment()">Confirmar</button>
@@ -392,7 +374,7 @@
   </div>
 
   <script>
-    // API URL - Usar mismo host (nginx hace proxy a API)
+    // API URL - mismo host (nginx hace proxy)
     const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? 'http://localhost:3000/api'
       : `${window.location.protocol}//${window.location.hostname}/api`;
@@ -403,123 +385,53 @@
     let selectedMember = null;
     let allPayments = [];
     let currentView = 'monthly';
-    let isConnected = false;
 
+    // Mostrar loading
     function showLoading(text = 'Guardando...') {
       document.getElementById('loadingText').textContent = text;
       document.getElementById('loadingOverlay').classList.add('active');
     }
 
+    // Ocultar loading
     function hideLoading() {
       document.getElementById('loadingOverlay').classList.remove('active');
     }
 
-    function showError(message) {
-      alert('❌ ' + message);
-    }
-
+    // Verificar conexión y cargar datos
     async function checkConnection() {
       try {
-        console.log('🔍 Conectando a:', API_URL);
         const res = await fetch(`${API_URL}/payments`);
-        console.log('✅ Response status:', res.status);
         if (res.ok) {
           const data = await res.json();
-          console.log('✅ Datos cargadas:', data.length, 'pagos');
-          isConnected = true;
+          // Convertir fechas a objetos Date
+          allPayments = data.map(p => ({
+            ...p,
+            payment_date: new Date(p.payment_date)
+          }));
           document.getElementById('statusDot').className = 'status-dot online';
           document.getElementById('statusText').textContent = 'Conectado';
-          allPayments = data;
-          loadData();
+          if (currentView === 'monthly') {
+            renderMembers();
+          } else {
+            renderYearly();
+          }
         } else {
-          throw new Error('Status: ' + res.status);
+          throw new Error('Error: ' + res.status);
         }
       } catch (err) {
-        console.error('❌ Error:', err.message);
-        isConnected = false;
         document.getElementById('statusDot').className = 'status-dot offline';
         document.getElementById('statusText').textContent = 'Error: ' + err.message;
-        document.getElementById('loading').innerHTML = `
-          <div class="empty-state">
-            <h3>❌ Error de conexión</h3>
+        document.getElementById('membersList').innerHTML = `
+          <div style="text-align:center;padding:60px 20px;color:#666;">
+            <h3 style="font-size:18px;margin-bottom:10px;color:#b3b3b3;">❌ Error de conexión</h3>
             <p>${err.message}</p>
-            <p style="margin-top:10px;font-size:12px;color:#666;">${API_URL}</p>
             <button class="btn btn-pay" onclick="checkConnection()" style="margin-top:15px;max-width:200px;">🔄 Reintentar</button>
           </div>
         `;
       }
     }
 
-    async function loadData() {
-      document.getElementById('loading').style.display = 'block';
-      try {
-        const res = await fetch(`${API_URL}/payments`);
-        if (!res.ok) throw new Error('Error loading data');
-        allPayments = await res.json();
-        document.getElementById('loading').style.display = 'none';
-        if (currentView === 'monthly') renderMembers();
-        else renderYearly();
-      } catch (err) {
-        console.error('Error loading:', err);
-        document.getElementById('loading').innerHTML = `
-          <div class="empty-state">
-            <h3>❌ Error al cargar</h3>
-            <p>${err.message}</p>
-            <button class="btn btn-pay" onclick="loadData()" style="margin-top:15px;max-width:200px;">🔄 Reintentar</button>
-          </div>
-        `;
-      }
-    }
-
-    async function savePayment(member, date, months, notes, method) {
-      const res = await fetch(`${API_URL}/payments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ member, payment_date: date, months, notes, method })
-      });
-      if (!res.ok) {
-        const error = await res.json().catch(() => ({ error: 'Error desconocido' }));
-        throw new Error(error.error || 'Error al guardar');
-      }
-      return await res.json();
-    }
-
-    async function deleteMemberPayments(member) {
-      const res = await fetch(`${API_URL}/payments/member/${encodeURIComponent(member)}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Error al eliminar');
-    }
-
-    function formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-    }
-
-    function getMonthKey(date) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    }
-
-    function calculateAdvance(memberPayments) {
-      let advance = 0;
-      const sorted = [...memberPayments].sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
-      for (const p of sorted) {
-        if (p.months > 1) advance += p.months - 1;
-      }
-      return advance;
-    }
-
-    function calculateTotalPaid(memberPayments) {
-      return memberPayments.reduce((sum, p) => sum + (p.months || 1), 0);
-    }
-
-    function setView(view) {
-      currentView = view;
-      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('monthlyView').style.display = view === 'monthly' ? 'block' : 'none';
-      document.getElementById('yearlyView').style.display = view === 'yearly' ? 'block' : 'none';
-      if (view === 'monthly') renderMembers();
-      else renderYearly();
-    }
-
+    // Renderizar vista mensual
     function renderMembers() {
       const monthKey = getMonthKey(currentDate);
       const container = document.getElementById('membersList');
@@ -527,21 +439,20 @@
 
       members.forEach(member => {
         const memberPayments = allPayments.filter(p => p.member === member);
-        const monthPayments = memberPayments.filter(p => getMonthKey(p.payment_date) === monthKey);
+        const monthPayments = memberPayments.filter(p => {
+          const pDate = p.payment_date instanceof Date ? p.payment_date : new Date(p.payment_date);
+          return getMonthKey(pDate) === monthKey;
+        });
         const latestPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
         const advanceMonths = calculateAdvance(memberPayments);
-        const totalPaid = calculateTotalPaid(memberPayments);
+        const totalPaid = memberPayments.reduce((sum, p) => sum + (p.months || 1), 0);
 
         let status = 'pending';
         let statusText = 'Pendiente';
-        let advanceInfo = '';
 
         if (advanceMonths > 0) {
           status = 'advance';
           statusText = `${advanceMonths} meses adelantados`;
-          const endDate = new Date(currentDate);
-          endDate.setMonth(endDate.getMonth() + advanceMonths);
-          advanceInfo = `📅 Adelanto hasta: ${endDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
         } else if (latestPayment) {
           status = 'paid';
           statusText = 'Pagado';
@@ -551,7 +462,7 @@
           <div class="member-card">
             <div class="member-header">
               <div>
-                <span class="member-name">${member}</span>
+                <div class="member-name">${member}</div>
                 <div class="member-total">Total: <strong>${totalPaid}</strong> meses</div>
               </div>
               <span class="status-badge status-${status}">${statusText}</span>
@@ -559,30 +470,17 @@
             ${latestPayment || advanceMonths > 0 ? `
               <div class="payment-info">
                 ${latestPayment ? `
-                  <p>📅 Última fecha: <strong>${formatDate(latestPayment.payment_date)}</strong></p>
+                  <p>📅 Fecha: <strong>${formatDate(latestPayment.payment_date)}</strong></p>
                   <p>💰 Tipo: <strong>${getPaymentTypeText(latestPayment.months)}</strong></p>
                   ${latestPayment.method ? `<p>🏦 Método: <strong>${latestPayment.method}</strong></p>` : ''}
-                  ${latestPayment.notes ? `<p>📝 Notas: ${latestPayment.notes}</p>` : ''}
                 ` : ''}
-                ${advanceInfo}
-                ${memberPayments.length > 0 ? `
-                  <div class="history">
-                    <p style="font-size:11px;color:#666;margin-bottom:8px;text-transform:uppercase;">Historial</p>
-                    ${memberPayments.slice(-5).reverse().map(p => `
-                      <div class="history-item">
-                        <span>${formatDate(p.payment_date)} • ${getPaymentTypeText(p.months)}</span>
-                        ${p.method ? `<span class="method method-${p.method.toLowerCase()}">${p.method}</span>` : ''}
-                      </div>
-                    `).join('')}
-                  </div>
-                ` : ''}
+                ${advanceMonths > 0 ? `<p>📅 Adelanto: <strong>${advanceMonths} meses</strong></p>` : ''}
               </div>
-            ` : `<div class="payment-info"><p style="color:#666;">Sin pagos registrados</p></div>`}
-            <button class="btn btn-pay" onclick="openModal('${member}', 'pay')">
+            ` : '<div class="payment-info"><p style="color:#666;">Sin pagos registrados</p></div>'}
+            <button class="btn btn-pay" onclick="openModal('${member}')">
               ${latestPayment || advanceMonths > 0 ? '✅ Registrar otro pago' : '💰 Registrar pago'}
             </button>
-            ${advanceMonths > 0 ? `<button class="btn btn-advance" onclick="openModal('${member}', 'advance')">➕ Añadir más meses</button>` : ''}
-            ${memberPayments.length > 0 ? `<button class="btn btn-reset" onclick="resetMember('${member}')">🔄 Resetear</button>` : ''}
+            ${memberPayments.length > 0 ? `<button class="btn btn-reset" onclick="resetMember('${member}')" style="margin-top:8px;">🔄 Resetear</button>` : ''}
           </div>
         `;
       });
@@ -591,17 +489,19 @@
       updateSummary();
     }
 
+    // Renderizar vista anual
     function renderYearly() {
       const container = document.getElementById('yearlyList');
       let html = '';
 
       members.forEach(member => {
         const memberPayments = allPayments.filter(p => {
-          const pYear = new Date(p.payment_date).getFullYear();
+          const pDate = p.payment_date instanceof Date ? p.payment_date : new Date(p.payment_date);
+          const pYear = pDate.getFullYear();
           return p.member === member && pYear === currentYear;
         });
 
-        const totalPaid = calculateTotalPaid(memberPayments);
+        const totalPaid = memberPayments.reduce((sum, p) => sum + (p.months || 1), 0);
         const totalMonths = memberPayments.length;
         const advanceMonths = calculateAdvance(memberPayments);
 
@@ -620,11 +520,21 @@
       container.innerHTML = html;
     }
 
-    function getPaymentTypeText(months) {
-      const types = { '1': 'Este mes', '3': '3 meses', '6': '6 meses', '12': '1 año' };
-      return types[months] || `${months} meses`;
+    // Calcular meses adelantados
+    function calculateAdvance(memberPayments) {
+      let advance = 0;
+      const sorted = [...memberPayments].sort((a, b) => {
+        const aDate = a.payment_date instanceof Date ? a.payment_date : new Date(a.payment_date);
+        const bDate = b.payment_date instanceof Date ? b.payment_date : new Date(b.payment_date);
+        return bDate - aDate;
+      });
+      for (const p of sorted) {
+        if (p.months > 1) advance += p.months - 1;
+      }
+      return advance;
     }
 
+    // Actualizar resumen
     function updateSummary() {
       const monthKey = getMonthKey(currentDate);
       let paid = 0, pending = 0, advance = 0;
@@ -632,7 +542,10 @@
       members.forEach(member => {
         const memberPayments = allPayments.filter(p => p.member === member);
         const advanceMonths = calculateAdvance(memberPayments);
-        const monthPayments = memberPayments.filter(p => getMonthKey(p.payment_date) === monthKey);
+        const monthPayments = memberPayments.filter(p => {
+          const pDate = p.payment_date instanceof Date ? p.payment_date : new Date(p.payment_date);
+          return getMonthKey(pDate) === monthKey;
+        });
 
         if (advanceMonths > 0) advance++;
         else if (monthPayments.length > 0) paid++;
@@ -642,6 +555,31 @@
       document.getElementById('paidCount').textContent = paid;
       document.getElementById('pendingCount').textContent = pending;
       document.getElementById('advanceCount').textContent = advance;
+    }
+
+    // Utilidades
+    function formatDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function getMonthKey(date) {
+      const d = date instanceof Date ? date : new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function getPaymentTypeText(months) {
+      const types = { '1': 'Este mes', '3': '3 meses', '6': '6 meses', '12': '1 año' };
+      return types[months] || `${months} meses`;
+    }
+
+    function setView(view) {
+      currentView = view;
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('monthlyView').style.display = view === 'monthly' ? 'block' : 'none';
+      document.getElementById('yearlyView').style.display = view === 'yearly' ? 'block' : 'none';
+      if (view === 'monthly') renderMembers();
+      else renderYearly();
     }
 
     function changeMonth(delta) {
@@ -656,9 +594,9 @@
       renderYearly();
     }
 
-    function openModal(member, type) {
+    function openModal(member) {
       selectedMember = member;
-      document.getElementById('modalTitle').textContent = type === 'advance' ? `Añadir adelanto - ${member}` : `Registrar pago - ${member}`;
+      document.getElementById('modalTitle').textContent = `Registrar pago - ${member}`;
       document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('paymentType').value = '1';
       document.getElementById('paymentMethod').value = 'Bizum';
@@ -679,13 +617,19 @@
 
       if (!date || !selectedMember) return;
 
-      showLoading('Guardando pago...');
+      showLoading('Guardando...');
       try {
-        await savePayment(selectedMember, date, months, notes, method);
-        await loadData();
+        await fetch(`${API_URL}/payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ member: selectedMember, payment_date: date, months, method, notes })
+        });
+        allPayments = await fetch(`${API_URL}/payments`).then(r => r.json());
+        if (currentView === 'monthly') renderMembers();
+        else renderYearly();
         closeModal();
       } catch (err) {
-        showError(err.message);
+        alert('Error: ' + err.message);
       } finally {
         hideLoading();
       }
@@ -695,10 +639,12 @@
       if (confirm(`¿Borrar todos los pagos de ${member}?`)) {
         showLoading('Eliminando...');
         try {
-          await deleteMemberPayments(member);
-          await loadData();
+          await fetch(`${API_URL}/payments/member/${encodeURIComponent(member)}`, { method: 'DELETE' });
+          allPayments = await fetch(`${API_URL}/payments`).then(r => r.json());
+          if (currentView === 'monthly') renderMembers();
+          else renderYearly();
         } catch (err) {
-          showError(err.message);
+          alert('Error: ' + err.message);
         } finally {
           hideLoading();
         }
@@ -707,44 +653,36 @@
 
     function exportCSV() {
       if (allPayments.length === 0) {
-        showError('No hay pagos para exportar');
+        alert('No hay pagos para exportar');
         return;
       }
-
-      // Crear CSV
-      const headers = ['ID', 'Miembro', 'Fecha', 'Meses', 'Método', 'Notas', 'Creado'];
+      const headers = ['ID', 'Miembro', 'Fecha', 'Meses', 'Método', 'Notas'];
       const rows = allPayments.map(p => [
-        p.id,
-        p.member,
-        new Date(p.payment_date).toLocaleDateString('es-ES'),
-        p.months,
-        p.method || '-',
-        p.notes || '-',
-        new Date(p.created_at).toLocaleDateString('es-ES')
-      ]);
-
-      const csvContent = [
-        headers.join(';'),
-        ...rows.map(row => row.join(';'))
-      ].join('\n');
-
-      // Descargar
-      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        p.id, p.member, new Date(p.payment_date).toLocaleDateString('es-ES'),
+        p.months, p.method || '-', p.notes || '-'
+      ].join(';'));
+      const csv = [headers.join(';'), ...rows].join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `spotify-pagos-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
+      link.href = URL.createObjectURL(blob);
+      link.download = `spotify-pagos-${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
-      document.body.removeChild(link);
     }
 
-    // Init
+    // Inicializar
     document.getElementById('currentMonth').textContent = currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     document.getElementById('currentYear').textContent = currentYear;
     checkConnection();
-    setInterval(loadData, 60000);
+    setInterval(() => {
+      fetch(`${API_URL}/payments`).then(r => r.json()).then(data => {
+        allPayments = data.map(p => ({
+          ...p,
+          payment_date: new Date(p.payment_date)
+        }));
+        if (currentView === 'monthly') renderMembers();
+        else renderYearly();
+      });
+    }, 60000);
   </script>
 </body>
 </html>
