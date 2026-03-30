@@ -20,7 +20,7 @@
     .header h1 { font-size: 28px; margin-bottom: 5px; }
     .header p { opacity: 0.8; font-size: 14px; }
     
-    .status-bar {
+    .actions-bar {
       margin: 15px 20px;
       padding: 12px 16px;
       background: #282828;
@@ -28,12 +28,31 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
     }
-    .status-info { display: flex; align-items: center; gap: 8px; }
-    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-info { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .status-dot.online { background: #1DB954; }
     .status-dot.offline { background: #ff4757; }
     .status-text { font-size: 13px; }
+    .action-btn {
+      background: #1DB954;
+      color: black;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .action-btn.secondary {
+      background: #3e3e3e;
+      color: white;
+    }
     
     .view-toggle {
       margin: 0 20px 20px;
@@ -113,6 +132,8 @@
       margin-bottom: 15px;
     }
     .member-name { font-size: 20px; font-weight: 700; }
+    .member-total { font-size: 13px; color: #b3b3b3; }
+    .member-total strong { color: #1DB954; }
     .status-badge {
       padding: 6px 12px;
       border-radius: 20px;
@@ -228,6 +249,47 @@
       font-size: 12px;
       color: #b3b3b3;
     }
+    .history-item .method {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .method-bizum { background: #1DB954; color: black; }
+    .method-transferencia { background: #3498db; color: white; }
+    .method-efectivo { background: #f39c12; color: black; }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #3e3e3e;
+      border-top-color: #1DB954;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: white; font-size: 14px; }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    .empty-state h3 { font-size: 18px; margin-bottom: 10px; color: #b3b3b3; }
+    .empty-state p { font-size: 14px; }
   </style>
 </head>
 <body>
@@ -236,12 +298,14 @@
     <p>Gestiona los pagos del plan familiar</p>
   </div>
 
-  <div class="status-bar">
+  <div class="actions-bar">
     <div class="status-info">
       <span class="status-dot" id="statusDot"></span>
       <span class="status-text" id="statusText">Conectando...</span>
     </div>
-    <span style="font-size:11px;color:#666" id="serverUrl"></span>
+    <button class="action-btn" onclick="exportCSV()">
+      📤 Exportar
+    </button>
   </div>
 
   <div class="view-toggle">
@@ -275,7 +339,10 @@
       </div>
     </div>
 
-    <div id="loading" style="text-align:center;padding:40px;color:#666;">Cargando...</div>
+    <div id="loading" style="text-align:center;padding:40px;color:#666;">
+      <div class="spinner" style="margin:0 auto 20px; width:50px; height:50px;"></div>
+      Cargando datos...
+    </div>
     <div id="membersList"></div>
   </div>
 
@@ -302,8 +369,15 @@
         <option value="6">6 meses</option>
         <option value="12">1 año (12 meses)</option>
       </select>
+      <label>Método de pago</label>
+      <select id="paymentMethod">
+        <option value="Bizum">Bizum</option>
+        <option value="Transferencia">Transferencia</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="Otro">Otro</option>
+      </select>
       <label>Notas (opcional)</label>
-      <input type="text" id="paymentNotes" placeholder="Ej: Transferencia, Bizum...">
+      <input type="text" id="paymentNotes" placeholder="Ej: Bizum, Transferencia...">
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
         <button class="btn-confirm" onclick="confirmPayment()">Confirmar</button>
@@ -311,8 +385,13 @@
     </div>
   </div>
 
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Guardando...</div>
+  </div>
+
   <script>
-    // API URL configurada - GitHub Pages usa Tailscale IP, local usa proxy
     const TAILSCALE_IP = '100.126.164.101';
     const API_URL = window.location.hostname.includes('github.io')
       ? `https://${TAILSCALE_IP}/api`
@@ -328,49 +407,82 @@
     let currentView = 'monthly';
     let isConnected = false;
 
+    function showLoading(text = 'Guardando...') {
+      document.getElementById('loadingText').textContent = text;
+      document.getElementById('loadingOverlay').classList.add('active');
+    }
+
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.remove('active');
+    }
+
+    function showError(message) {
+      alert('❌ ' + message);
+    }
+
     async function checkConnection() {
       try {
-        const res = await fetch(`${API_URL}/payments`);
+        const res = await fetch(`${API_URL}/payments`, { timeout: 5000 });
         if (res.ok) {
           isConnected = true;
           document.getElementById('statusDot').className = 'status-dot online';
           document.getElementById('statusText').textContent = 'Conectado';
           document.getElementById('serverUrl').textContent = window.location.hostname;
           loadData();
+        } else {
+          throw new Error('Server error');
         }
       } catch (err) {
         isConnected = false;
         document.getElementById('statusDot').className = 'status-dot offline';
         document.getElementById('statusText').textContent = 'Sin conexión';
-        document.getElementById('loading').textContent = '❌ Sin conexión al servidor';
+        document.getElementById('loading').innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Sin conexión</h3>
+            <p>Verifica que Docker está corriendo y Tailscale activo</p>
+            <p style="margin-top:10px;font-size:12px;color:#666;">${API_URL}</p>
+          </div>
+        `;
       }
     }
 
     async function loadData() {
+      document.getElementById('loading').style.display = 'block';
       try {
         const res = await fetch(`${API_URL}/payments`);
-        if (!res.ok) throw new Error('Error');
+        if (!res.ok) throw new Error('Error loading data');
         allPayments = await res.json();
+        document.getElementById('loading').style.display = 'none';
         if (currentView === 'monthly') renderMembers();
         else renderYearly();
       } catch (err) {
         console.error('Error loading:', err);
+        document.getElementById('loading').innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Error al cargar</h3>
+            <p>${err.message}</p>
+            <button class="btn btn-pay" onclick="loadData()" style="margin-top:15px;max-width:200px;">🔄 Reintentar</button>
+          </div>
+        `;
       }
     }
 
-    async function savePayment(member, date, months, notes) {
+    async function savePayment(member, date, months, notes, method) {
       const res = await fetch(`${API_URL}/payments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ member, payment_date: date, months, notes })
+        body: JSON.stringify({ member, payment_date: date, months, notes, method })
       });
-      if (!res.ok) throw new Error('Error saving');
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: 'Error desconocido' }));
+        throw new Error(error.error || 'Error al guardar');
+      }
       return await res.json();
     }
 
     async function deleteMemberPayments(member) {
       const res = await fetch(`${API_URL}/payments/member/${encodeURIComponent(member)}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Error deleting');
+      if (!res.ok) throw new Error('Error al eliminar');
     }
 
     function formatDate(dateStr) {
@@ -388,6 +500,10 @@
         if (p.months > 1) advance += p.months - 1;
       }
       return advance;
+    }
+
+    function calculateTotalPaid(memberPayments) {
+      return memberPayments.reduce((sum, p) => sum + (p.months || 1), 0);
     }
 
     function setView(view) {
@@ -410,6 +526,7 @@
         const monthPayments = memberPayments.filter(p => getMonthKey(p.payment_date) === monthKey);
         const latestPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
         const advanceMonths = calculateAdvance(memberPayments);
+        const totalPaid = calculateTotalPaid(memberPayments);
 
         let status = 'pending';
         let statusText = 'Pendiente';
@@ -429,7 +546,10 @@
         html += `
           <div class="member-card">
             <div class="member-header">
-              <span class="member-name">${member}</span>
+              <div>
+                <span class="member-name">${member}</span>
+                <div class="member-total">Total: <strong>${totalPaid}</strong> meses</div>
+              </div>
               <span class="status-badge status-${status}">${statusText}</span>
             </div>
             ${latestPayment || advanceMonths > 0 ? `
@@ -437,16 +557,17 @@
                 ${latestPayment ? `
                   <p>📅 Última fecha: <strong>${formatDate(latestPayment.payment_date)}</strong></p>
                   <p>💰 Tipo: <strong>${getPaymentTypeText(latestPayment.months)}</strong></p>
+                  ${latestPayment.method ? `<p>🏦 Método: <strong>${latestPayment.method}</strong></p>` : ''}
                   ${latestPayment.notes ? `<p>📝 Notas: ${latestPayment.notes}</p>` : ''}
                 ` : ''}
                 ${advanceInfo}
                 ${memberPayments.length > 0 ? `
                   <div class="history">
                     <p style="font-size:11px;color:#666;margin-bottom:8px;text-transform:uppercase;">Historial</p>
-                    ${memberPayments.slice(-3).reverse().map(p => `
+                    ${memberPayments.slice(-5).reverse().map(p => `
                       <div class="history-item">
-                        <span>${formatDate(p.payment_date)}</span>
-                        <span>${getPaymentTypeText(p.months)}</span>
+                        <span>${formatDate(p.payment_date)} • ${getPaymentTypeText(p.months)}</span>
+                        ${p.method ? `<span class="method method-${p.method.toLowerCase()}">${p.method}</span>` : ''}
                       </div>
                     `).join('')}
                   </div>
@@ -457,7 +578,7 @@
               ${latestPayment || advanceMonths > 0 ? '✅ Registrar otro pago' : '💰 Registrar pago'}
             </button>
             ${advanceMonths > 0 ? `<button class="btn btn-advance" onclick="openModal('${member}', 'advance')">➕ Añadir más meses</button>` : ''}
-            ${latestPayment || advanceMonths > 0 ? `<button class="btn btn-reset" onclick="resetMember('${member}')">🔄 Resetear</button>` : ''}
+            ${memberPayments.length > 0 ? `<button class="btn btn-reset" onclick="resetMember('${member}')">🔄 Resetear</button>` : ''}
           </div>
         `;
       });
@@ -476,7 +597,7 @@
           return p.member === member && pYear === currentYear;
         });
 
-        const totalPaid = memberPayments.reduce((sum, p) => sum + (p.months || 1), 0);
+        const totalPaid = calculateTotalPaid(memberPayments);
         const totalMonths = memberPayments.length;
         const advanceMonths = calculateAdvance(memberPayments);
 
@@ -536,6 +657,7 @@
       document.getElementById('modalTitle').textContent = type === 'advance' ? `Añadir adelanto - ${member}` : `Registrar pago - ${member}`;
       document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('paymentType').value = '1';
+      document.getElementById('paymentMethod').value = 'Bizum';
       document.getElementById('paymentNotes').value = '';
       document.getElementById('paymentModal').classList.add('active');
     }
@@ -548,28 +670,70 @@
     async function confirmPayment() {
       const date = document.getElementById('paymentDate').value;
       const months = parseInt(document.getElementById('paymentType').value);
+      const method = document.getElementById('paymentMethod').value;
       const notes = document.getElementById('paymentNotes').value;
 
       if (!date || !selectedMember) return;
 
+      showLoading('Guardando pago...');
       try {
-        await savePayment(selectedMember, date, months, notes);
+        await savePayment(selectedMember, date, months, notes, method);
         await loadData();
         closeModal();
       } catch (err) {
-        alert('Error guardando: ' + err.message);
+        showError(err.message);
+      } finally {
+        hideLoading();
       }
     }
 
     async function resetMember(member) {
       if (confirm(`¿Borrar todos los pagos de ${member}?`)) {
+        showLoading('Eliminando...');
         try {
           await deleteMemberPayments(member);
           await loadData();
         } catch (err) {
-          alert('Error: ' + err.message);
+          showError(err.message);
+        } finally {
+          hideLoading();
         }
       }
+    }
+
+    function exportCSV() {
+      if (allPayments.length === 0) {
+        showError('No hay pagos para exportar');
+        return;
+      }
+
+      // Crear CSV
+      const headers = ['ID', 'Miembro', 'Fecha', 'Meses', 'Método', 'Notas', 'Creado'];
+      const rows = allPayments.map(p => [
+        p.id,
+        p.member,
+        new Date(p.payment_date).toLocaleDateString('es-ES'),
+        p.months,
+        p.method || '-',
+        p.notes || '-',
+        new Date(p.created_at).toLocaleDateString('es-ES')
+      ]);
+
+      const csvContent = [
+        headers.join(';'),
+        ...rows.map(row => row.join(';'))
+      ].join('\n');
+
+      // Descargar
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `spotify-pagos-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     // Init

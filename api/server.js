@@ -36,12 +36,12 @@ app.get('/api/payments', async (req, res) => {
 
 // POST /payments - Registrar nuevo pago
 app.post('/api/payments', async (req, res) => {
-  const { member, payment_date, months, notes } = req.body;
+  const { member, payment_date, months, notes, method } = req.body;
   
   try {
     const result = await pool.query(
-      'INSERT INTO payments (member, payment_date, months, notes) VALUES ($1, $2, $3, $4) RETURNING *',
-      [member, payment_date, months, notes || null]
+      'INSERT INTO payments (member, payment_date, months, notes, method) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [member, payment_date, months, notes || null, method || null]
     );
     res.json(result.rows[0]);
   } catch (err) {
