@@ -394,7 +394,7 @@
   <script>
     const TAILSCALE_IP = '100.126.164.101';
     const API_URL = window.location.hostname.includes('github.io')
-      ? `https://${TAILSCALE_IP}/api`
+      ? `http://${TAILSCALE_IP}:3000/api`
       : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3000/api'
         : `${window.location.protocol}//${window.location.hostname}/api`;
