@@ -4,13 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pago Spotify Familiar</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
@@ -18,282 +14,95 @@
       padding: 20px;
       padding-bottom: 100px;
     }
-
-    .header {
-      text-align: center;
-      color: white;
-      margin-bottom: 20px;
-    }
-
-    .header h1 {
-      font-size: 24px;
-      margin-bottom: 5px;
-    }
-
-    .header p {
-      opacity: 0.9;
-      font-size: 14px;
-    }
-
+    .header { text-align: center; color: white; margin-bottom: 20px; }
+    .header h1 { font-size: 24px; margin-bottom: 5px; }
+    .header p { opacity: 0.9; font-size: 14px; }
     .month-selector {
-      background: white;
-      border-radius: 16px;
-      padding: 15px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      background: white; border-radius: 16px; padding: 15px;
+      margin-bottom: 20px; display: flex; justify-content: space-between;
+      align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-
     .month-selector button {
-      background: #1DB954;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 10px;
-      font-size: 16px;
-      cursor: pointer;
+      background: #1DB954; color: white; border: none;
+      padding: 10px 15px; border-radius: 10px; font-size: 16px; cursor: pointer;
     }
-
-    .month-selector span {
-      font-weight: 600;
-      font-size: 16px;
-      text-transform: capitalize;
-    }
-
+    .month-selector span { font-weight: 600; font-size: 16px; text-transform: capitalize; }
     .member-card {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 15px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      background: white; border-radius: 16px; padding: 20px;
+      margin-bottom: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-
     .member-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 15px;
     }
-
-    .member-name {
-      font-size: 18px;
-      font-weight: 600;
-      color: #191414;
-    }
-
+    .member-name { font-size: 18px; font-weight: 600; color: #191414; }
     .status-badge {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
+      padding: 6px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
     }
-
-    .status-paid {
-      background: #1DB954;
-      color: white;
-    }
-
-    .status-pending {
-      background: #ff4757;
-      color: white;
-    }
-
-    .status-advance {
-      background: #3498db;
-      color: white;
-    }
-
+    .status-paid { background: #1DB954; color: white; }
+    .status-pending { background: #ff4757; color: white; }
+    .status-advance { background: #3498db; color: white; }
     .payment-info {
-      background: #f8f9fa;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 15px;
+      background: #f8f9fa; border-radius: 12px;
+      padding: 12px; margin-bottom: 15px;
     }
-
-    .payment-info p {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 5px;
-    }
-
-    .payment-info p:last-child {
-      margin-bottom: 0;
-    }
-
-    .payment-info strong {
-      color: #191414;
-    }
-
+    .payment-info p { font-size: 13px; color: #666; margin-bottom: 5px; }
+    .payment-info p:last-child { margin-bottom: 0; }
+    .payment-info strong { color: #191414; }
     .btn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.2s;
+      width: 100%; padding: 12px; border: none; border-radius: 12px;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.2s;
     }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    .btn-pay {
-      background: #1DB954;
-      color: white;
-    }
-
-    .btn-advance {
-      background: #3498db;
-      color: white;
-      margin-top: 8px;
-    }
-
-    .btn-reset {
-      background: #ff4757;
-      color: white;
-      margin-top: 8px;
-    }
-
+    .btn:active { transform: scale(0.98); }
+    .btn-pay { background: #1DB954; color: white; }
+    .btn-advance { background: #3498db; color: white; margin-top: 8px; }
+    .btn-reset { background: #ff4757; color: white; margin-top: 8px; }
     .summary {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      background: white; border-radius: 16px; padding: 20px;
+      margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-
-    .summary h2 {
-      font-size: 16px;
-      color: #191414;
-      margin-bottom: 15px;
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .summary-item {
-      text-align: center;
-      padding: 10px;
-      border-radius: 12px;
-      background: #f8f9fa;
-    }
-
-    .summary-item .number {
-      font-size: 24px;
-      font-weight: 700;
-      display: block;
-    }
-
-    .summary-item .label {
-      font-size: 11px;
-      color: #666;
-      text-transform: uppercase;
-    }
-
+    .summary h2 { font-size: 16px; color: #191414; margin-bottom: 15px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .summary-item { text-align: center; padding: 10px; border-radius: 12px; background: #f8f9fa; }
+    .summary-item .number { font-size: 24px; font-weight: 700; display: block; }
+    .summary-item .label { font-size: 11px; color: #666; text-transform: uppercase; }
     .summary-item.paid .number { color: #1DB954; }
     .summary-item.pending .number { color: #ff4757; }
     .summary-item.advance .number { color: #3498db; }
-
     .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.6);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6); z-index: 1000;
+      align-items: center; justify-content: center; padding: 20px;
     }
-
-    .modal.active {
-      display: flex;
-    }
-
+    .modal.active { display: flex; }
     .modal-content {
-      background: white;
-      border-radius: 20px;
-      padding: 25px;
-      width: 100%;
-      max-width: 400px;
+      background: white; border-radius: 20px; padding: 25px;
+      width: 100%; max-width: 400px;
     }
-
-    .modal-content h3 {
-      margin-bottom: 20px;
-      color: #191414;
+    .modal-content h3 { margin-bottom: 20px; color: #191414; }
+    .modal-content label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #666; }
+    .modal-content input, .modal-content select {
+      width: 100%; padding: 12px; border: 2px solid #eee;
+      border-radius: 12px; font-size: 16px; margin-bottom: 15px;
     }
-
-    .modal-content label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #666;
+    .modal-content input:focus, .modal-content select:focus { outline: none; border-color: #1DB954; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-cancel { background: #f1f3f4; color: #191414; }
+    .btn-confirm { background: #1DB954; color: white; }
+    .history { margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+    .history-item { font-size: 12px; color: #666; padding: 5px 0; display: flex; justify-content: space-between; }
+    .loading { text-align: center; color: white; padding: 20px; }
+    .setup-notice {
+      background: #fff3cd; border: 2px solid #ffc107;
+      border-radius: 16px; padding: 20px; margin-bottom: 20px;
     }
-
-    .modal-content input,
-    .modal-content select {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid #eee;
-      border-radius: 12px;
-      font-size: 16px;
-      margin-bottom: 15px;
-    }
-
-    .modal-content input:focus,
-    .modal-content select:focus {
-      outline: none;
-      border-color: #1DB954;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .modal-actions button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .btn-cancel {
-      background: #f1f3f4;
-      color: #191414;
-    }
-
-    .btn-confirm {
-      background: #1DB954;
-      color: white;
-    }
-
-    .history {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid #eee;
-    }
-
-    .history-item {
-      font-size: 12px;
-      color: #666;
-      padding: 5px 0;
-      display: flex;
-      justify-content: space-between;
+    .setup-notice h3 { color: #856404; margin-bottom: 10px; }
+    .setup-notice p { color: #856404; font-size: 13px; margin-bottom: 10px; }
+    .setup-notice code {
+      background: #fff; padding: 10px; border-radius: 8px;
+      display: block; font-size: 11px; margin: 10px 0;
     }
   </style>
 </head>
@@ -301,6 +110,13 @@
   <div class="header">
     <h1>🎵 Pago Spotify Familiar</h1>
     <p>Gestiona los pagos del plan familiar</p>
+  </div>
+
+  <div id="setupNotice" class="setup-notice" style="display:none;">
+    <h3>⚠️ Configuración Pendiente</h3>
+    <p>Para guardar los datos en la nube necesitas:</p>
+    <code>1. Crear proyecto en supabase.com<br>2. Copiar URL y API Key<br>3. Pegar en config.js</code>
+    <button class="btn btn-pay" onclick="showConfigModal()">⚙️ Configurar</button>
   </div>
 
   <div class="month-selector">
@@ -313,20 +129,21 @@
     <h2>📊 Resumen del Mes</h2>
     <div class="summary-grid">
       <div class="summary-item paid">
-        <span class="number" id="paidCount">0</span>
+        <span class="number" id="paidCount">-</span>
         <span class="label">Pagados</span>
       </div>
       <div class="summary-item pending">
-        <span class="number" id="pendingCount">5</span>
+        <span class="number" id="pendingCount">-</span>
         <span class="label">Pendientes</span>
       </div>
       <div class="summary-item advance">
-        <span class="number" id="advanceCount">0</span>
+        <span class="number" id="advanceCount">-</span>
         <span class="label">Adelanto</span>
       </div>
     </div>
   </div>
 
+  <div id="loading" class="loading">Cargando datos...</div>
   <div id="membersList"></div>
 
   <!-- Modal para registrar pago -->
@@ -335,7 +152,6 @@
       <h3 id="modalTitle">Registrar Pago</h3>
       <label>Fecha de pago</label>
       <input type="date" id="paymentDate">
-      
       <label>Tipo de pago</label>
       <select id="paymentType">
         <option value="1">Este mes (1 mes)</option>
@@ -343,10 +159,8 @@
         <option value="6">6 meses</option>
         <option value="12">1 año (12 meses)</option>
       </select>
-
       <label>Notas (opcional)</label>
       <input type="text" id="paymentNotes" placeholder="Ej: Transferencia, Bizum...">
-
       <div class="modal-actions">
         <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
         <button class="btn-confirm" onclick="confirmPayment()">Confirmar</button>
@@ -354,58 +168,167 @@
     </div>
   </div>
 
+  <!-- Modal de configuración -->
+  <div class="modal" id="configModal">
+    <div class="modal-content">
+      <h3>⚙️ Configurar Supabase</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:15px;">
+        1. Ve a <strong>supabase.com</strong><br>
+        2. Crea proyecto gratis<br>
+        3. En SQL Editor ejecuta el script<br>
+        4. Copia URL y API Key
+      </p>
+      <label>Supabase URL</label>
+      <input type="text" id="supabaseUrl" placeholder="https://xxxxx.supabase.co">
+      <label>Supabase API Key (anon)</label>
+      <input type="text" id="supabaseKey" placeholder="eyJhbG...">
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="document.getElementById('configModal').classList.remove('active')">Cerrar</button>
+        <button class="btn-confirm" onclick="saveConfig()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Configuración
+    let supabase = null;
+    let isConfigured = false;
+    
+    // Cargar config desde localStorage
+    function loadConfig() {
+      const url = localStorage.getItem('supabaseUrl');
+      const key = localStorage.getItem('supabaseKey');
+      if (url && key) {
+        supabase = window.supabase.createClient(url, key);
+        isConfigured = true;
+        return true;
+      }
+      return false;
+    }
+    
+    // Guardar config
+    function saveConfig() {
+      const url = document.getElementById('supabaseUrl').value.trim();
+      const key = document.getElementById('supabaseKey').value.trim();
+      if (url && key) {
+        localStorage.setItem('supabaseUrl', url);
+        localStorage.setItem('supabaseKey', key);
+        supabase = window.supabase.createClient(url, key);
+        isConfigured = true;
+        document.getElementById('configModal').classList.remove('active');
+        document.getElementById('setupNotice').style.display = 'none';
+        loadData();
+      }
+    }
+    
+    // Mostrar modal config
+    function showConfigModal() {
+      const url = localStorage.getItem('supabaseUrl') || '';
+      const key = localStorage.getItem('supabaseKey') || '';
+      document.getElementById('supabaseUrl').value = url;
+      document.getElementById('supabaseKey').value = key;
+      document.getElementById('configModal').classList.add('active');
+    }
+
     // Datos de los miembros
     const members = ['Rubén', 'María', 'Litri', 'Kika', 'Gordi'];
-    
-    // Estado de la aplicación
     let currentDate = new Date();
     let selectedMember = null;
-    
-    // Cargar datos desde localStorage
-    function loadPayments() {
-      const data = localStorage.getItem('spotifyPayments');
-      return data ? JSON.parse(data) : {};
+    let allPayments = [];
+
+    // Crear tabla en Supabase
+    async function createTable() {
+      const { error } = await supabase.rpc('create_payments_table');
+      if (error) console.log('Tabla ya existe o error:', error);
     }
-    
-    // Guardar datos en localStorage
-    function savePayments(data) {
-      localStorage.setItem('spotifyPayments', JSON.stringify(data));
+
+    // Cargar datos desde Supabase
+    async function loadData() {
+      if (!isConfigured) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('setupNotice').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'block';
+      
+      try {
+        const { data, error } = await supabase
+          .from('payments')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        allPayments = data || [];
+        renderMembers();
+      } catch (error) {
+        console.error('Error loading:', error);
+        alert('Error cargando datos: ' + error.message);
+      }
+      
+      document.getElementById('loading').style.display = 'none';
     }
-    
-    // Obtener clave única para mes/año
-    function getMonthKey(date) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+    // Guardar pago en Supabase
+    async function savePayment(member, date, months, notes) {
+      const { error } = await supabase
+        .from('payments')
+        .insert([{
+          member: member,
+          payment_date: date,
+          months: months,
+          notes: notes,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
     }
-    
-    // Formatear fecha para mostrar
+
+    // Formatear fecha
     function formatDate(dateStr) {
       const date = new Date(dateStr);
       return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
     }
-    
-    // Renderizar la lista de miembros
+
+    // Obtener clave de mes
+    function getMonthKey(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    // Calcular meses adelantados
+    function calculateAdvance(memberPayments) {
+      let advance = 0;
+      const sorted = [...memberPayments].sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
+      
+      for (const p of sorted) {
+        if (p.months > 1) {
+          advance += p.months - 1;
+        }
+      }
+      return advance;
+    }
+
+    // Renderizar miembros
     function renderMembers() {
-      const payments = loadPayments();
       const monthKey = getMonthKey(currentDate);
       const container = document.getElementById('membersList');
       
       let html = '';
       
       members.forEach(member => {
-        const memberData = payments[member] || { payments: [], advanceMonths: 0 };
-        const monthPayments = memberData.payments.filter(p => p.month === monthKey);
+        const memberPayments = allPayments.filter(p => p.member === member);
+        const monthPayments = memberPayments.filter(p => getMonthKey(p.payment_date) === monthKey);
         const latestPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
+        const advanceMonths = calculateAdvance(memberPayments);
         
-        // Calcular estado
         let status = 'pending';
         let statusText = 'Pendiente';
         let advanceInfo = '';
         
-        if (memberData.advanceMonths > 0) {
+        if (advanceMonths > 0) {
           status = 'advance';
-          statusText = `${memberData.advanceMonths} meses adelantados`;
-          advanceInfo = `📅 Adelanto hasta: ${getAdvanceEndDate(memberData.advanceMonths)}`;
+          statusText = `${advanceMonths} meses adelantados`;
+          advanceInfo = `📅 Adelanto hasta: ${getAdvanceEndDate(advanceMonths)}`;
         } else if (latestPayment) {
           status = 'paid';
           statusText = 'Pagado';
@@ -418,20 +341,20 @@
               <span class="status-badge status-${status}">${statusText}</span>
             </div>
             
-            ${latestPayment || memberData.advanceMonths > 0 ? `
+            ${latestPayment || advanceMonths > 0 ? `
               <div class="payment-info">
                 ${latestPayment ? `
-                  <p>📅 Última fecha: <strong>${formatDate(latestPayment.date)}</strong></p>
+                  <p>📅 Última fecha: <strong>${formatDate(latestPayment.payment_date)}</strong></p>
                   <p>💰 Tipo: <strong>${getPaymentTypeText(latestPayment.months)}</strong></p>
                   ${latestPayment.notes ? `<p>📝 Notas: ${latestPayment.notes}</p>` : ''}
                 ` : ''}
                 ${advanceInfo}
-                ${memberData.payments.length > 0 ? `
+                ${memberPayments.length > 0 ? `
                   <div class="history">
                     <p style="font-size:11px;color:#999;margin-bottom:5px;">HISTORIAL RECIENTE</p>
-                    ${memberData.payments.slice(-3).reverse().map(p => `
+                    ${memberPayments.slice(-3).reverse().map(p => `
                       <div class="history-item">
-                        <span>${formatDate(p.date)}</span>
+                        <span>${formatDate(p.payment_date)}</span>
                         <span>${getPaymentTypeText(p.months)}</span>
                       </div>
                     `).join('')}
@@ -445,14 +368,14 @@
             `}
             
             <button class="btn btn-pay" onclick="openModal('${member}', 'pay')">
-              ${latestPayment || memberData.advanceMonths > 0 ? '✅ Registrar otro pago' : '💰 Registrar pago'}
+              ${latestPayment || advanceMonths > 0 ? '✅ Registrar otro pago' : '💰 Registrar pago'}
             </button>
-            ${memberData.advanceMonths > 0 ? `
+            ${advanceMonths > 0 ? `
               <button class="btn btn-advance" onclick="openModal('${member}', 'advance')">
                 ➕ Añadir más meses
               </button>
             ` : ''}
-            ${latestPayment ? `
+            ${latestPayment || advanceMonths > 0 ? `
               <button class="btn btn-reset" onclick="resetMember('${member}')">
                 🔄 Resetear
               </button>
@@ -464,55 +387,40 @@
       container.innerHTML = html;
       updateSummary();
     }
-    
+
     // Obtener texto del tipo de pago
     function getPaymentTypeText(months) {
-      const types = {
-        '1': 'Este mes',
-        '3': '3 meses',
-        '6': '6 meses',
-        '12': '1 año'
-      };
+      const types = { '1': 'Este mes', '3': '3 meses', '6': '6 meses', '12': '1 año' };
       return types[months] || `${months} meses`;
     }
-    
+
     // Calcular fecha final de adelanto
     function getAdvanceEndDate(months) {
       const date = new Date(currentDate);
       date.setMonth(date.getMonth() + months);
       return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     }
-    
+
     // Actualizar resumen
     function updateSummary() {
-      const payments = loadPayments();
       const monthKey = getMonthKey(currentDate);
-      
-      let paid = 0;
-      let pending = 0;
-      let advance = 0;
+      let paid = 0, pending = 0, advance = 0;
       
       members.forEach(member => {
-        const memberData = payments[member] || { payments: [], advanceMonths: 0 };
+        const memberPayments = allPayments.filter(p => p.member === member);
+        const advanceMonths = calculateAdvance(memberPayments);
+        const monthPayments = memberPayments.filter(p => getMonthKey(p.payment_date) === monthKey);
         
-        if (memberData.advanceMonths > 0) {
-          advance++;
-        }
-        
-        const monthPayments = memberData.payments.filter(p => p.month === monthKey);
-        
-        if (monthPayments.length > 0) {
-          paid++;
-        } else if (memberData.advanceMonths === 0) {
-          pending++;
-        }
+        if (advanceMonths > 0) advance++;
+        else if (monthPayments.length > 0) paid++;
+        else pending++;
       });
       
       document.getElementById('paidCount').textContent = paid;
       document.getElementById('pendingCount').textContent = pending;
       document.getElementById('advanceCount').textContent = advance;
     }
-    
+
     // Cambiar mes
     function changeMonth(delta) {
       currentDate.setMonth(currentDate.getMonth() + delta);
@@ -520,7 +428,7 @@
         currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
       renderMembers();
     }
-    
+
     // Abrir modal
     function openModal(member, type) {
       selectedMember = member;
@@ -531,66 +439,77 @@
       document.getElementById('paymentNotes').value = '';
       document.getElementById('paymentModal').classList.add('active');
     }
-    
+
     // Cerrar modal
     function closeModal() {
       document.getElementById('paymentModal').classList.remove('active');
       selectedMember = null;
     }
-    
+
     // Confirmar pago
-    function confirmPayment() {
+    async function confirmPayment() {
       const date = document.getElementById('paymentDate').value;
       const months = parseInt(document.getElementById('paymentType').value);
       const notes = document.getElementById('paymentNotes').value;
       
       if (!date || !selectedMember) return;
       
-      const payments = loadPayments();
-      const monthKey = getMonthKey(new Date(date));
-      
-      if (!payments[selectedMember]) {
-        payments[selectedMember] = { payments: [], advanceMonths: 0 };
+      try {
+        await savePayment(selectedMember, date, months, notes);
+        await loadData();
+        closeModal();
+      } catch (error) {
+        alert('Error guardando: ' + error.message);
       }
-      
-      // Añadir pago
-      payments[selectedMember].payments.push({
-        date: date,
-        month: monthKey,
-        months: months,
-        notes: notes,
-        timestamp: Date.now()
-      });
-      
-      // Actualizar meses adelantados
-      if (months > 1) {
-        payments[selectedMember].advanceMonths = 
-          (payments[selectedMember].advanceMonths || 0) + months - 1;
-      }
-      
-      savePayments(payments);
-      closeModal();
-      renderMembers();
     }
-    
+
     // Resetear miembro
-    function resetMember(member) {
-      if (confirm(`¿Resetear todos los pagos de ${member}?`)) {
-        const payments = loadPayments();
-        payments[member] = { payments: [], advanceMonths: 0 };
-        savePayments(payments);
-        renderMembers();
+    async function resetMember(member) {
+      if (confirm(`¿Borrar todos los pagos de ${member}?`)) {
+        const { error } = await supabase
+          .from('payments')
+          .delete()
+          .eq('member', member);
+        
+        if (error) {
+          alert('Error: ' + error.message);
+        } else {
+          await loadData();
+        }
       }
     }
-    
+
+    // SQL para crear tabla (mostrar en config)
+    const createTableSQL = `
+-- Crear tabla payments
+CREATE TABLE IF NOT EXISTS payments (
+  id BIGSERIAL PRIMARY KEY,
+  member TEXT NOT NULL,
+  payment_date DATE NOT NULL,
+  months INTEGER NOT NULL DEFAULT 1,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index para búsquedas rápidas
+CREATE INDEX IF NOT EXISTS idx_payments_member ON payments(member);
+CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date);
+    `;
+
     // Inicializar
     document.getElementById('currentMonth').textContent = 
       currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-    
-    renderMembers();
-    
-    // Auto-refresh cada minuto
-    setInterval(renderMembers, 60000);
+
+    // Cargar config y datos
+    if (loadConfig()) {
+      loadData();
+    } else {
+      document.getElementById('setupNotice').style.display = 'block';
+      document.getElementById('loading').style.display = 'none';
+      
+      // Guardar SQL en clipboard button
+      console.log('SQL para crear tabla:', createTableSQL);
+    }
   </script>
 </body>
 </html>
