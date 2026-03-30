@@ -8,102 +8,226 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+      background: #121212;
+      color: white;
       min-height: 100vh;
-      padding: 20px;
       padding-bottom: 100px;
     }
-    .header { text-align: center; color: white; margin-bottom: 20px; }
-    .header h1 { font-size: 24px; margin-bottom: 5px; }
-    .header p { opacity: 0.9; font-size: 14px; }
-    .month-selector {
-      background: white; border-radius: 16px; padding: 15px;
-      margin-bottom: 20px; display: flex; justify-content: space-between;
-      align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    .header {
+      background: linear-gradient(180deg, #1DB954 0%, #121212 100%);
+      padding: 20px 20px 100px;
     }
-    .month-selector button {
-      background: #1DB954; color: white; border: none;
-      padding: 10px 15px; border-radius: 10px; font-size: 16px; cursor: pointer;
+    .header h1 { font-size: 28px; margin-bottom: 5px; }
+    .header p { opacity: 0.8; font-size: 14px; }
+    
+    .status-bar {
+      margin: 15px 20px;
+      padding: 12px 16px;
+      background: #282828;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .month-selector span { font-weight: 600; font-size: 16px; text-transform: capitalize; }
-    .member-card {
-      background: white; border-radius: 16px; padding: 20px;
-      margin-bottom: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    .status-info { display: flex; align-items: center; gap: 8px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-dot.online { background: #1DB954; }
+    .status-dot.offline { background: #ff4757; }
+    .status-text { font-size: 13px; }
+    
+    .view-toggle {
+      margin: 0 20px 20px;
+      display: flex;
+      gap: 10px;
     }
-    .member-header {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 15px;
+    .view-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #282828;
+      color: #b3b3b3;
     }
-    .member-name { font-size: 18px; font-weight: 600; color: #191414; }
-    .status-badge {
-      padding: 6px 12px; border-radius: 20px;
-      font-size: 12px; font-weight: 600;
+    .view-btn.active {
+      background: #1DB954;
+      color: black;
     }
-    .status-paid { background: #1DB954; color: white; }
-    .status-pending { background: #ff4757; color: white; }
-    .status-advance { background: #3498db; color: white; }
-    .payment-info {
-      background: #f8f9fa; border-radius: 12px;
-      padding: 12px; margin-bottom: 15px;
-    }
-    .payment-info p { font-size: 13px; color: #666; margin-bottom: 5px; }
-    .payment-info p:last-child { margin-bottom: 0; }
-    .payment-info strong { color: #191414; }
-    .btn {
-      width: 100%; padding: 12px; border: none; border-radius: 12px;
-      font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.2s;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn-pay { background: #1DB954; color: white; }
-    .btn-advance { background: #3498db; color: white; margin-top: 8px; }
-    .btn-reset { background: #ff4757; color: white; margin-top: 8px; }
+    
     .summary {
-      background: white; border-radius: 16px; padding: 20px;
-      margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin: 0 20px 20px;
+      padding: 20px;
+      background: #282828;
+      border-radius: 12px;
     }
-    .summary h2 { font-size: 16px; color: #191414; margin-bottom: 15px; }
-    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .summary-item { text-align: center; padding: 10px; border-radius: 12px; background: #f8f9fa; }
-    .summary-item .number { font-size: 24px; font-weight: 700; display: block; }
-    .summary-item .label { font-size: 11px; color: #666; text-transform: uppercase; }
+    .summary h2 { font-size: 16px; margin-bottom: 15px; color: #b3b3b3; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .summary-item {
+      text-align: center;
+      padding: 15px 10px;
+      background: #121212;
+      border-radius: 8px;
+    }
+    .summary-item .number { font-size: 28px; font-weight: 700; display: block; margin-bottom: 4px; }
+    .summary-item .label { font-size: 11px; color: #b3b3b3; text-transform: uppercase; }
     .summary-item.paid .number { color: #1DB954; }
     .summary-item.pending .number { color: #ff4757; }
     .summary-item.advance .number { color: #3498db; }
+    
+    .month-selector {
+      margin: 0 20px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #282828;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .month-selector button {
+      background: #1DB954;
+      color: black;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .month-selector span { font-weight: 600; font-size: 15px; text-transform: capitalize; }
+    
+    .member-card {
+      margin: 0 20px 15px;
+      background: #282828;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .member-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .member-name { font-size: 20px; font-weight: 700; }
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-paid { background: #1DB954; color: black; }
+    .status-pending { background: #ff4757; color: white; }
+    .status-advance { background: #3498db; color: white; }
+    
+    .payment-info {
+      background: #121212;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .payment-info p { font-size: 13px; color: #b3b3b3; margin-bottom: 8px; }
+    .payment-info p:last-child { margin-bottom: 0; }
+    .payment-info strong { color: white; }
+    
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-pay { background: #1DB954; color: black; }
+    .btn-advance { background: #3498db; color: white; margin-top: 8px; }
+    .btn-reset { background: transparent; border: 1px solid #ff4757; color: #ff4757; margin-top: 8px; }
+    
+    .year-selector {
+      margin: 0 20px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #282828;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .year-selector button {
+      background: #1DB954;
+      color: black;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .year-selector span { font-weight: 600; font-size: 18px; }
+    
+    .yearly-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 0 20px 20px;
+    }
+    .yearly-member {
+      background: #282828;
+      border-radius: 12px;
+      padding: 15px;
+    }
+    .yearly-member h3 { font-size: 16px; margin-bottom: 10px; }
+    .yearly-stats { display: flex; gap: 15px; font-size: 13px; color: #b3b3b3; }
+    .yearly-stats span strong { color: #1DB954; }
+    
     .modal {
-      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.6); z-index: 1000;
-      align-items: center; justify-content: center; padding: 20px;
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: flex-end;
+      justify-content: center;
     }
     .modal.active { display: flex; }
     .modal-content {
-      background: white; border-radius: 20px; padding: 25px;
-      width: 100%; max-width: 400px;
+      background: #282828;
+      border-radius: 20px 20px 0 0;
+      padding: 25px;
+      width: 100%;
+      max-width: 500px;
     }
-    .modal-content h3 { margin-bottom: 20px; color: #191414; }
-    .modal-content label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #666; }
+    .modal-content h3 { margin-bottom: 20px; font-size: 20px; }
+    .modal-content label { display: block; margin-bottom: 8px; font-size: 13px; color: #b3b3b3; }
     .modal-content input, .modal-content select {
-      width: 100%; padding: 12px; border: 2px solid #eee;
-      border-radius: 12px; font-size: 16px; margin-bottom: 15px;
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #3e3e3e;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      background: #121212;
+      color: white;
     }
-    .modal-content input:focus, .modal-content select:focus { outline: none; border-color: #1DB954; }
+    .modal-content input:focus, .modal-content select:focus {
+      outline: none;
+      border-color: #1DB954;
+    }
     .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-    .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-cancel { background: #f1f3f4; color: #191414; }
-    .btn-confirm { background: #1DB954; color: white; }
-    .history { margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
-    .history-item { font-size: 12px; color: #666; padding: 5px 0; display: flex; justify-content: space-between; }
-    .loading { text-align: center; color: white; padding: 20px; }
-    .status-bar {
-      background: rgba(0,0,0,0.2); color: white;
-      padding: 10px; border-radius: 12px; margin-bottom: 20px;
-      display: flex; justify-content: space-between; align-items: center;
+    .modal-actions button { flex: 1; padding: 14px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; }
+    .btn-cancel { background: #3e3e3e; color: white; }
+    .btn-confirm { background: #1DB954; color: black; }
+    
+    .history { margin-top: 15px; padding-top: 15px; border-top: 1px solid #3e3e3e; }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 12px;
+      color: #b3b3b3;
     }
-    .status-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      display: inline-block; margin-right: 8px;
-    }
-    .status-dot.online { background: #1DB954; }
-    .status-dot.offline { background: #ff4757; }
   </style>
 </head>
 <body>
@@ -113,38 +237,59 @@
   </div>
 
   <div class="status-bar">
-    <span><span class="status-dot" id="statusDot"></span><span id="statusText">Conectando...</span></span>
-    <span style="font-size:12px;opacity:0.8" id="serverUrl"></span>
+    <div class="status-info">
+      <span class="status-dot" id="statusDot"></span>
+      <span class="status-text" id="statusText">Conectando...</span>
+    </div>
+    <span style="font-size:11px;color:#666" id="serverUrl"></span>
   </div>
 
-  <div class="month-selector">
-    <button onclick="changeMonth(-1)">◀</button>
-    <span id="currentMonth"></span>
-    <button onclick="changeMonth(1)">▶</button>
+  <div class="view-toggle">
+    <button class="view-btn active" onclick="setView('monthly')">Mensual</button>
+    <button class="view-btn" onclick="setView('yearly')">Anual</button>
   </div>
 
-  <div class="summary">
-    <h2>📊 Resumen del Mes</h2>
-    <div class="summary-grid">
-      <div class="summary-item paid">
-        <span class="number" id="paidCount">-</span>
-        <span class="label">Pagados</span>
-      </div>
-      <div class="summary-item pending">
-        <span class="number" id="pendingCount">-</span>
-        <span class="label">Pendientes</span>
-      </div>
-      <div class="summary-item advance">
-        <span class="number" id="advanceCount">-</span>
-        <span class="label">Adelanto</span>
+  <!-- Vista Mensual -->
+  <div id="monthlyView">
+    <div class="month-selector">
+      <button onclick="changeMonth(-1)">◀</button>
+      <span id="currentMonth"></span>
+      <button onclick="changeMonth(1)">▶</button>
+    </div>
+
+    <div class="summary">
+      <h2>📊 Resumen del Mes</h2>
+      <div class="summary-grid">
+        <div class="summary-item paid">
+          <span class="number" id="paidCount">-</span>
+          <span class="label">Pagados</span>
+        </div>
+        <div class="summary-item pending">
+          <span class="number" id="pendingCount">-</span>
+          <span class="label">Pendientes</span>
+        </div>
+        <div class="summary-item advance">
+          <span class="number" id="advanceCount">-</span>
+          <span class="label">Adelanto</span>
+        </div>
       </div>
     </div>
+
+    <div id="loading" style="text-align:center;padding:40px;color:#666;">Cargando...</div>
+    <div id="membersList"></div>
   </div>
 
-  <div id="loading" class="loading">Cargando datos...</div>
-  <div id="membersList"></div>
+  <!-- Vista Anual -->
+  <div id="yearlyView" style="display:none;">
+    <div class="year-selector">
+      <button onclick="changeYear(-1)">◀</button>
+      <span id="currentYear"></span>
+      <button onclick="changeYear(1)">▶</button>
+    </div>
+    <div class="yearly-grid" id="yearlyList"></div>
+  </div>
 
-  <!-- Modal para registrar pago -->
+  <!-- Modal -->
   <div class="modal" id="paymentModal">
     <div class="modal-content">
       <h3 id="modalTitle">Registrar Pago</h3>
@@ -167,18 +312,18 @@
   </div>
 
   <script>
-    // Configuración del servidor - Usar Tailscale IP por defecto
-    const TAILSCALE_IP = '100.126.164.101';
-    const API_URL = `http://${TAILSCALE_IP}:3000/api`;
+    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3000/api'
+      : `${window.location.protocol}//${window.location.hostname}/api`;
 
-    // Estado
     const members = ['Rubén', 'María', 'Litri', 'Kika', 'Gordi'];
     let currentDate = new Date();
+    let currentYear = currentDate.getFullYear();
     let selectedMember = null;
     let allPayments = [];
+    let currentView = 'monthly';
     let isConnected = false;
 
-    // Verificar conexión
     async function checkConnection() {
       try {
         const res = await fetch(`${API_URL}/payments`);
@@ -186,32 +331,29 @@
           isConnected = true;
           document.getElementById('statusDot').className = 'status-dot online';
           document.getElementById('statusText').textContent = 'Conectado';
-          document.getElementById('serverUrl').textContent = API_URL;
+          document.getElementById('serverUrl').textContent = window.location.hostname;
           loadData();
-        } else {
-          throw new Error('Server error');
         }
       } catch (err) {
         isConnected = false;
         document.getElementById('statusDot').className = 'status-dot offline';
-        document.getElementById('statusText').textContent = 'Sin conexión - Verifica que el servidor esté corriendo';
-        document.getElementById('loading').textContent = '❌ No se puede conectar al servidor. Asegúrate de ejecutar: docker-compose up';
+        document.getElementById('statusText').textContent = 'Sin conexión';
+        document.getElementById('loading').textContent = '❌ Sin conexión al servidor';
       }
     }
 
-    // Cargar datos
     async function loadData() {
       try {
         const res = await fetch(`${API_URL}/payments`);
-        if (!res.ok) throw new Error('Error fetching');
+        if (!res.ok) throw new Error('Error');
         allPayments = await res.json();
-        renderMembers();
+        if (currentView === 'monthly') renderMembers();
+        else renderYearly();
       } catch (err) {
         console.error('Error loading:', err);
       }
     }
 
-    // Guardar pago
     async function savePayment(member, date, months, notes) {
       const res = await fetch(`${API_URL}/payments`, {
         method: 'POST',
@@ -222,26 +364,19 @@
       return await res.json();
     }
 
-    // Borrar pagos de miembro
     async function deleteMemberPayments(member) {
-      const res = await fetch(`${API_URL}/payments/member/${encodeURIComponent(member)}`, {
-        method: 'DELETE'
-      });
+      const res = await fetch(`${API_URL}/payments/member/${encodeURIComponent(member)}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error deleting');
     }
 
-    // Formatear fecha
     function formatDate(dateStr) {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+      return new Date(dateStr).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
     }
 
-    // Obtener clave de mes
     function getMonthKey(date) {
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     }
 
-    // Calcular meses adelantados
     function calculateAdvance(memberPayments) {
       let advance = 0;
       const sorted = [...memberPayments].sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
@@ -251,39 +386,48 @@
       return advance;
     }
 
-    // Renderizar miembros
+    function setView(view) {
+      currentView = view;
+      document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('monthlyView').style.display = view === 'monthly' ? 'block' : 'none';
+      document.getElementById('yearlyView').style.display = view === 'yearly' ? 'block' : 'none';
+      if (view === 'monthly') renderMembers();
+      else renderYearly();
+    }
+
     function renderMembers() {
       const monthKey = getMonthKey(currentDate);
       const container = document.getElementById('membersList');
-      
       let html = '';
-      
+
       members.forEach(member => {
         const memberPayments = allPayments.filter(p => p.member === member);
         const monthPayments = memberPayments.filter(p => getMonthKey(p.payment_date) === monthKey);
         const latestPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
         const advanceMonths = calculateAdvance(memberPayments);
-        
+
         let status = 'pending';
         let statusText = 'Pendiente';
         let advanceInfo = '';
-        
+
         if (advanceMonths > 0) {
           status = 'advance';
           statusText = `${advanceMonths} meses adelantados`;
-          advanceInfo = `📅 Adelanto hasta: ${getAdvanceEndDate(advanceMonths)}`;
+          const endDate = new Date(currentDate);
+          endDate.setMonth(endDate.getMonth() + advanceMonths);
+          advanceInfo = `📅 Adelanto hasta: ${endDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
         } else if (latestPayment) {
           status = 'paid';
           statusText = 'Pagado';
         }
-        
+
         html += `
           <div class="member-card">
             <div class="member-header">
               <span class="member-name">${member}</span>
               <span class="status-badge status-${status}">${statusText}</span>
             </div>
-            
             ${latestPayment || advanceMonths > 0 ? `
               <div class="payment-info">
                 ${latestPayment ? `
@@ -294,7 +438,7 @@
                 ${advanceInfo}
                 ${memberPayments.length > 0 ? `
                   <div class="history">
-                    <p style="font-size:11px;color:#999;margin-bottom:5px;">HISTORIAL RECIENTE</p>
+                    <p style="font-size:11px;color:#666;margin-bottom:8px;text-transform:uppercase;">Historial</p>
                     ${memberPayments.slice(-3).reverse().map(p => `
                       <div class="history-item">
                         <span>${formatDate(p.payment_date)}</span>
@@ -304,99 +448,106 @@
                   </div>
                 ` : ''}
               </div>
-            ` : `
-              <div class="payment-info">
-                <p style="color:#999;">Sin pagos registrados</p>
-              </div>
-            `}
-            
+            ` : `<div class="payment-info"><p style="color:#666;">Sin pagos registrados</p></div>`}
             <button class="btn btn-pay" onclick="openModal('${member}', 'pay')">
               ${latestPayment || advanceMonths > 0 ? '✅ Registrar otro pago' : '💰 Registrar pago'}
             </button>
-            ${advanceMonths > 0 ? `
-              <button class="btn btn-advance" onclick="openModal('${member}', 'advance')">
-                ➕ Añadir más meses
-              </button>
-            ` : ''}
-            ${latestPayment || advanceMonths > 0 ? `
-              <button class="btn btn-reset" onclick="resetMember('${member}')">
-                🔄 Resetear
-              </button>
-            ` : ''}
+            ${advanceMonths > 0 ? `<button class="btn btn-advance" onclick="openModal('${member}', 'advance')">➕ Añadir más meses</button>` : ''}
+            ${latestPayment || advanceMonths > 0 ? `<button class="btn btn-reset" onclick="resetMember('${member}')">🔄 Resetear</button>` : ''}
           </div>
         `;
       });
-      
+
       container.innerHTML = html;
       updateSummary();
     }
 
-    // Obtener texto del tipo de pago
+    function renderYearly() {
+      const container = document.getElementById('yearlyList');
+      let html = '';
+
+      members.forEach(member => {
+        const memberPayments = allPayments.filter(p => {
+          const pYear = new Date(p.payment_date).getFullYear();
+          return p.member === member && pYear === currentYear;
+        });
+
+        const totalPaid = memberPayments.reduce((sum, p) => sum + (p.months || 1), 0);
+        const totalMonths = memberPayments.length;
+        const advanceMonths = calculateAdvance(memberPayments);
+
+        html += `
+          <div class="yearly-member">
+            <h3>${member}</h3>
+            <div class="yearly-stats">
+              <span>Pagos: <strong>${totalMonths}</strong></span>
+              <span>Meses: <strong>${totalPaid}</strong></span>
+              ${advanceMonths > 0 ? `<span style="color:#3498db">Adelanto: <strong>${advanceMonths}</strong></span>` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
     function getPaymentTypeText(months) {
       const types = { '1': 'Este mes', '3': '3 meses', '6': '6 meses', '12': '1 año' };
       return types[months] || `${months} meses`;
     }
 
-    // Calcular fecha final de adelanto
-    function getAdvanceEndDate(months) {
-      const date = new Date(currentDate);
-      date.setMonth(date.getMonth() + months);
-      return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-    }
-
-    // Actualizar resumen
     function updateSummary() {
       const monthKey = getMonthKey(currentDate);
       let paid = 0, pending = 0, advance = 0;
-      
+
       members.forEach(member => {
         const memberPayments = allPayments.filter(p => p.member === member);
         const advanceMonths = calculateAdvance(memberPayments);
         const monthPayments = memberPayments.filter(p => getMonthKey(p.payment_date) === monthKey);
-        
+
         if (advanceMonths > 0) advance++;
         else if (monthPayments.length > 0) paid++;
         else pending++;
       });
-      
+
       document.getElementById('paidCount').textContent = paid;
       document.getElementById('pendingCount').textContent = pending;
       document.getElementById('advanceCount').textContent = advance;
     }
 
-    // Cambiar mes
     function changeMonth(delta) {
       currentDate.setMonth(currentDate.getMonth() + delta);
-      document.getElementById('currentMonth').textContent = 
-        currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      document.getElementById('currentMonth').textContent = currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
       renderMembers();
     }
 
-    // Abrir modal
+    function changeYear(delta) {
+      currentYear += delta;
+      document.getElementById('currentYear').textContent = currentYear;
+      renderYearly();
+    }
+
     function openModal(member, type) {
       selectedMember = member;
-      document.getElementById('modalTitle').textContent = 
-        type === 'advance' ? `Añadir adelanto - ${member}` : `Registrar pago - ${member}`;
+      document.getElementById('modalTitle').textContent = type === 'advance' ? `Añadir adelanto - ${member}` : `Registrar pago - ${member}`;
       document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('paymentType').value = '1';
       document.getElementById('paymentNotes').value = '';
       document.getElementById('paymentModal').classList.add('active');
     }
 
-    // Cerrar modal
     function closeModal() {
       document.getElementById('paymentModal').classList.remove('active');
       selectedMember = null;
     }
 
-    // Confirmar pago
     async function confirmPayment() {
       const date = document.getElementById('paymentDate').value;
       const months = parseInt(document.getElementById('paymentType').value);
       const notes = document.getElementById('paymentNotes').value;
-      
+
       if (!date || !selectedMember) return;
-      
+
       try {
         await savePayment(selectedMember, date, months, notes);
         await loadData();
@@ -406,7 +557,6 @@
       }
     }
 
-    // Resetear miembro
     async function resetMember(member) {
       if (confirm(`¿Borrar todos los pagos de ${member}?`)) {
         try {
@@ -418,14 +568,10 @@
       }
     }
 
-    // Inicializar
-    document.getElementById('currentMonth').textContent = 
-      currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-
-    // Check conexión y cargar datos
+    // Init
+    document.getElementById('currentMonth').textContent = currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    document.getElementById('currentYear').textContent = currentYear;
     checkConnection();
-    
-    // Auto-refresh cada minuto
     setInterval(loadData, 60000);
   </script>
 </body>
