@@ -949,6 +949,27 @@
       return advanceCount;
     }
 
+    // Verificar si un mes está cubierto por algún pago (incluyendo adelantos que se agotan)
+    function isMonthCovered(memberPayments, targetYear, targetMonth) {
+      const targetTotalMonths = targetYear * 12 + targetMonth;
+      
+      for (const payment of memberPayments) {
+        const payDate = payment.payment_date instanceof Date ? payment.payment_date : new Date(payment.payment_date);
+        const payYear = payDate.getFullYear();
+        const payMonth = payDate.getMonth();
+        const monthsPaid = payment.months || 1;
+        
+        const firstTotalMonths = payYear * 12 + payMonth;
+        const lastTotalMonths = payYear * 12 + (payMonth + monthsPaid - 1);
+        
+        if (targetTotalMonths >= firstTotalMonths && targetTotalMonths <= lastTotalMonths) {
+          return true;
+        }
+      }
+      
+      return false;
+    }
+
     // Render mensual
     function renderMembers() {
       const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
@@ -965,15 +986,18 @@
         });
         const latestPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
         
-        // Calcular adelanto REAL para el mes actual
+        // Calcular adelanto REAL para el mes actual (meses que quedan DESPUÉS de este mes)
         const advanceMonths = getAdvanceForMonth(memberPayments, currentYear, currentMonth);
         const totalPaid = memberPayments.reduce((sum, p) => sum + (p.months || 1), 0);
+        
+        // Verificar si el mes actual está cubierto (por pago este mes O por adelanto)
+        const isCovered = isMonthCovered(memberPayments, currentYear, currentMonth);
 
         let status = 'pending', statusText = 'Pendiente';
         if (advanceMonths > 0) { 
           status = 'advance'; 
           statusText = `${advanceMonths} meses adel.`; 
-        } else if (latestPayment) { 
+        } else if (isCovered || latestPayment) { 
           status = 'paid'; 
           statusText = 'Pagado'; 
         }
@@ -1086,18 +1110,30 @@
     // Actualizar resumen
     function updateSummary() {
       const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth();
       let paid = 0, pending = 0, advance = 0;
 
       members.forEach(member => {
         const memberPayments = allPayments.filter(p => p.member === member);
-        const advanceMonths = memberPayments.reduce((sum, p) => sum + (p.months > 1 ? p.months - 1 : 0), 0);
+        // Calcular adelanto REAL para este mes (meses que quedan después de este mes)
+        const advanceMonths = getAdvanceForMonth(memberPayments, currentYear, currentMonth);
+        // Verificar si hay pago registrado este mes
         const monthPayments = memberPayments.filter(p => {
           const d = p.payment_date instanceof Date ? p.payment_date : new Date(p.payment_date);
           return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === monthKey;
         });
-        if (advanceMonths > 0) advance++;
-        else if (monthPayments.length > 0) paid++;
-        else pending++;
+        // Verificar si el mes está cubierto por algún pago (incluyendo adelantos)
+        const isCovered = isMonthCovered(memberPayments, currentYear, currentMonth);
+        
+        // Clasificar: si tiene adelanto → advance, si está cubierto (pagado este mes o por adelanto) → paid, si no → pending
+        if (advanceMonths > 0) { 
+          advance++;
+        } else if (isCovered || monthPayments.length > 0) { 
+          paid++;
+        } else { 
+          pending++;
+        }
       });
 
       document.getElementById('paidCount').textContent = paid;
