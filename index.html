@@ -769,7 +769,10 @@
       <span class="status-dot" id="statusDot"></span>
       <span class="status-text" id="statusText">Conectando...</span>
     </div>
-    <button class="action-btn" onclick="exportCSV()">📤 Exportar</button>
+    <div style="display:flex;gap:8px;">
+      <button class="action-btn" onclick="refreshData()" style="padding:8px 12px;font-size:16px;" title="Actualizar">🔄</button>
+      <button class="action-btn" onclick="exportCSV()" title="Exportar">📤</button>
+    </div>
   </div>
 
   <div class="view-toggle">
@@ -945,51 +948,7 @@
     let currentView = 'monthly';
     let yearlyChart = null;
     
-    // Pull to refresh - menos sensible
-    let touchStartY = 0;
-    let touchEndY = 0;
-    let ptrEnabled = false;
-    
-    document.addEventListener('touchstart', e => {
-      // Solo activar si estamos en el top de la página
-      if (window.scrollY === 0) {
-        touchStartY = e.touches[0].clientY;
-        ptrEnabled = true;
-      } else {
-        ptrEnabled = false;
-      }
-    }, { passive: true });
-    
-    document.addEventListener('touchmove', e => {
-      if (!ptrEnabled) return;
-      
-      touchEndY = e.touches[0].clientY;
-      const diff = touchEndY - touchStartY;
-      
-      // Solo activar si el pull es suficientemente grande (>120px en vez de 80px)
-      if (diff > 0 && diff < 150) {
-        const indicator = document.getElementById('ptrIndicator');
-        if (indicator) {
-          indicator.style.top = `${-60 + (diff / 2.5)}px`;
-        }
-      }
-    }, { passive: true });
-    
-    document.addEventListener('touchend', async () => {
-      if (!ptrEnabled) return;
-      
-      const diff = touchEndY - touchStartY;
-      // Umbral más alto para activar (120px en vez de 80px)
-      if (diff > 120) {
-        await refreshData();
-      }
-      
-      const indicator = document.getElementById('ptrIndicator');
-      if (indicator) {
-        indicator.style.top = '-60px';
-      }
-      ptrEnabled = false;
-    }, { passive: true });
+    // Pull to refresh removed - use refresh button instead
 
     // Mostrar toast
     function showToast(message, isError = false) {
@@ -1010,7 +969,7 @@
       document.getElementById('loadingOverlay').classList.remove('active');
     }
 
-    // Refresh data
+    // Refresh data (manual only - no auto-refresh)
     async function refreshData() {
       showLoading('Actualizando...');
       try {
@@ -1025,7 +984,7 @@
         document.getElementById('statusText').textContent = 'Conectado';
         if (currentView === 'monthly') renderMembers();
         else renderYearly();
-        showToast('✅ Datos actualizados');
+        // No toast - user knows they clicked refresh
       } catch (err) {
         showToast('❌ ' + err.message, true);
       } finally {
@@ -1442,17 +1401,7 @@
     document.getElementById('currentYear').textContent = currentYear;
     checkConnection();
     
-    // Auto-refresh cada minuto
-    setInterval(() => {
-      fetch(`${API_URL}/payments`).then(r => r.json()).then(data => {
-        allPayments = data.map(p => ({
-          ...p,
-          payment_date: new Date(p.payment_date)
-        }));
-        if (currentView === 'monthly') renderMembers();
-        else renderYearly();
-      });
-    }, 60000);
+    // NO auto-refresh - user controls when to refresh via button
   </script>
 </body>
 </html>
