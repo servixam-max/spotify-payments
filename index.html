@@ -1126,9 +1126,10 @@
         // Verificar si el mes está cubierto por algún pago (incluyendo adelantos)
         const isCovered = isMonthCovered(memberPayments, currentYear, currentMonth);
         
-        // Clasificar: si tiene adelanto → advance, si está cubierto (pagado este mes o por adelanto) → paid, si no → pending
+        // Clasificar para conteo individual
         if (advanceMonths > 0) { 
           advance++;
+          paid++; // Los adelantos TAMBIÉN cuentan como pagados para la barra de progreso
         } else if (isCovered || monthPayments.length > 0) { 
           paid++;
         } else { 
@@ -1140,11 +1141,15 @@
       document.getElementById('pendingCount').textContent = pending;
       document.getElementById('advanceCount').textContent = advance;
 
-      const total = paid + pending + advance;
-      const paidPct = total > 0 ? Math.round((paid / total) * 100) : 0;
-      const pendingPct = total > 0 ? Math.round((pending / total) * 100) : 0;
-      document.getElementById('progressPaid').style.width = paidPct + '%';
-      document.getElementById('progressPaidText').textContent = paidPct + '%';
+      // Para la barra de progreso: pagados incluye adelantos (100% = todos cubiertos)
+      const total = members.length;
+      const coveredCount = paid; // paid ya incluye adelantos
+      const pendingCount = pending;
+      const coveredPct = total > 0 ? Math.round((coveredCount / total) * 100) : 0;
+      const pendingPct = total > 0 ? Math.round((pendingCount / total) * 100) : 0;
+      
+      document.getElementById('progressPaid').style.width = coveredPct + '%';
+      document.getElementById('progressPaidText').textContent = coveredPct + '%';
       document.getElementById('progressPending').style.width = pendingPct + '%';
       document.getElementById('progressPendingText').textContent = pendingPct + '%';
     }
