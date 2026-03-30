@@ -900,9 +900,60 @@
       window.scrollTo(0, 0);
     }
 
+    // Calcular meses cubiertos por adelanto en un mes específico
+    function getAdvanceForMonth(memberPayments, targetYear, targetMonth) {
+      // targetMonth es 0-indexed (0=enero, 11=diciembre)
+      let advanceCount = 0;
+      
+      // Ordenar pagos por fecha
+      const sorted = [...memberPayments].sort((a, b) => {
+        const aDate = a.payment_date instanceof Date ? a.payment_date : new Date(a.payment_date);
+        const bDate = b.payment_date instanceof Date ? b.payment_date : new Date(b.payment_date);
+        return aDate - bDate;
+      });
+      
+      // Para cada pago, calcular qué meses cubre
+      for (const payment of sorted) {
+        const payDate = payment.payment_date instanceof Date ? payment.payment_date : new Date(payment.payment_date);
+        const payYear = payDate.getFullYear();
+        const payMonth = payDate.getMonth(); // 0-indexed
+        const monthsPaid = payment.months || 1;
+        
+        // Este pago cubre desde payMonth hasta payMonth + monthsPaid - 1
+        const firstMonth = { year: payYear, month: payMonth };
+        const lastMonth = { year: payYear, month: payMonth + monthsPaid - 1 };
+        
+        // Normalizar lastMonth si cruza año
+        let actualLastYear = lastMonth.year;
+        let actualLastMonth = lastMonth.month;
+        while (actualLastMonth > 11) {
+          actualLastYear++;
+          actualLastMonth -= 12;
+        }
+        
+        // Check if target month is covered by this payment
+        const targetTotalMonths = targetYear * 12 + targetMonth;
+        const firstTotalMonths = firstMonth.year * 12 + firstMonth.month;
+        const lastTotalMonths = actualLastYear * 12 + actualLastMonth;
+        
+        if (targetTotalMonths >= firstTotalMonths && targetTotalMonths <= lastTotalMonths) {
+          // Este mes está cubierto por este pago
+          // Calcular cuántos meses de adelanto quedan DESPUÉS del mes target
+          const remainingMonths = lastTotalMonths - targetTotalMonths;
+          if (remainingMonths > 0) {
+            advanceCount = Math.max(advanceCount, remainingMonths);
+          }
+        }
+      }
+      
+      return advanceCount;
+    }
+
     // Render mensual
     function renderMembers() {
       const monthKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}`;
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth(); // 0-indexed
       const container = document.getElementById('membersList');
       let html = '';
 
@@ -913,13 +964,19 @@
           return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` === monthKey;
         });
         const latestPayment = monthPayments.length > 0 ? monthPayments[monthPayments.length - 1] : null;
-        const advanceMonths = memberPayments.reduce((sum, p) => sum + (p.months > 1 ? p.months - 1 : 0), 0);
+        
+        // Calcular adelanto REAL para el mes actual
+        const advanceMonths = getAdvanceForMonth(memberPayments, currentYear, currentMonth);
         const totalPaid = memberPayments.reduce((sum, p) => sum + (p.months || 1), 0);
-        const pendingMonths = Math.max(0, 1 - (latestPayment ? 1 : 0));
 
         let status = 'pending', statusText = 'Pendiente';
-        if (advanceMonths > 0) { status = 'advance'; statusText = `${advanceMonths} meses adel.`; }
-        else if (latestPayment) { status = 'paid'; statusText = 'Pagado'; }
+        if (advanceMonths > 0) { 
+          status = 'advance'; 
+          statusText = `${advanceMonths} meses adel.`; 
+        } else if (latestPayment) { 
+          status = 'paid'; 
+          statusText = 'Pagado'; 
+        }
 
         html += `<div class="member-card">
           <div class="member-header">
@@ -943,7 +1000,7 @@
 
         html += `<button class="btn btn-pay" onclick="openModal('${member}')">${latestPayment || advanceMonths > 0 ? '✅ Registrar otro' : '💰 Registrar pago'}</button>`;
         
-        // Botón WhatsApp - solo si está pendiente
+        // Botón WhatsApp - solo si está pendiente (sin pago este mes y sin adelanto)
         if (!latestPayment && advanceMonths === 0) {
           const phone = memberPhones[member] || '34600000000';
           const message = encodeURIComponent(`Hola ${member} 👋\n\nTe recuerdo que debes el pago de Spotify de este mes (${PRICE_PER_MONTH.toFixed(2)}€).\n\n¿Cuándo puedes hacerme un Bizum?\n\nGracias! 🎵`);
