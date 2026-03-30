@@ -295,8 +295,8 @@
   </div>
 
   <div class="view-toggle">
-    <button class="view-btn active" onclick="setView('monthly')">Mensual</button>
-    <button class="view-btn" onclick="setView('yearly')">Anual</button>
+    <button class="view-btn active" onclick="setView('monthly', this)">Mensual</button>
+    <button class="view-btn" onclick="setView('yearly', this)">Anual</button>
   </div>
 
   <!-- Vista Mensual -->
@@ -572,10 +572,10 @@
       return types[months] || `${months} meses`;
     }
 
-    function setView(view) {
+    function setView(view, btn) {
       currentView = view;
       document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
+      if (btn) btn.classList.add('active');
       document.getElementById('monthlyView').style.display = view === 'monthly' ? 'block' : 'none';
       document.getElementById('yearlyView').style.display = view === 'yearly' ? 'block' : 'none';
       if (view === 'monthly') renderMembers();
@@ -619,12 +619,19 @@
 
       showLoading('Guardando...');
       try {
-        await fetch(`${API_URL}/payments`, {
+        const res = await fetch(`${API_URL}/payments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ member: selectedMember, payment_date: date, months, method, notes })
         });
-        allPayments = await fetch(`${API_URL}/payments`).then(r => r.json());
+        if (!res.ok) throw new Error('Error al guardar');
+        
+        const data = await fetch(`${API_URL}/payments`).then(r => r.json());
+        allPayments = data.map(p => ({
+          ...p,
+          payment_date: new Date(p.payment_date)
+        }));
+        
         if (currentView === 'monthly') renderMembers();
         else renderYearly();
         closeModal();
