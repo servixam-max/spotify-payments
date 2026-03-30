@@ -19,9 +19,20 @@
     .header {
       background: linear-gradient(180deg, #1DB954 0%, #1DB954 60%, transparent 100%);
       padding: 40px 20px 120px;
+      position: relative;
+      overflow: hidden;
     }
-    .header h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
-    .header p { opacity: 0.9; font-size: 15px; }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+      animation: rotateBg 20s linear infinite;
+    }
+    @keyframes rotateBg { to { transform: rotate(360deg); } }
+    .header h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; position: relative; z-index: 1; }
+    .header p { opacity: 0.9; font-size: 15px; position: relative; z-index: 1; }
     
     /* Actions bar */
     .actions-bar {
@@ -108,7 +119,21 @@
     }
     .summary h2 { font-size: 14px; color: #999; margin-bottom: 16px; text-transform: uppercase; }
     .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .summary-item { text-align: center; padding: 16px 10px; background: rgba(10,10,10,0.8); border-radius: 12px; }
+    .summary-item { 
+      text-align: center; 
+      padding: 16px 10px; 
+      background: linear-gradient(135deg, rgba(10,10,10,0.9) 0%, rgba(20,20,20,0.9) 100%);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .summary-item:active { transform: scale(0.95); }
+    .summary-item .number { animation: numberPop 0.5s cubic-bezier(0.4,0,0.2,1); }
+    @keyframes numberPop {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
     .summary-item .number { font-size: 32px; font-weight: 800; display: block; margin-bottom: 4px; }
     .summary-item .label { font-size: 10px; color: #777; text-transform: uppercase; }
     .summary-item.paid .number { color: #1DB954; }
@@ -120,9 +145,26 @@
     .progress-item { margin-bottom: 12px; }
     .progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: #999; }
     .progress-bar { height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
-    .progress-fill.paid { background: #1DB954; }
-    .progress-fill.pending { background: #ff4757; }
+    .progress-fill { 
+      height: 100%; 
+      border-radius: 4px; 
+      transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+      animation: shimmer 2s ease-in-out infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .progress-fill.paid { background: linear-gradient(90deg, #1DB954 0%, #1ed760 100%); box-shadow: 0 0 15px rgba(29,185,84,0.5); }
+    .progress-fill.pending { background: linear-gradient(90deg, #ff4757 0%, #ff6b7a 100%); box-shadow: 0 0 15px rgba(255,71,87,0.5); }
     
     /* Quick actions */
     .quick-actions {
@@ -151,10 +193,20 @@
     /* Member card */
     .member-card {
       margin: 0 16px 14px;
-      background: rgba(30,30,30,0.95);
+      background: linear-gradient(135deg, rgba(30,30,30,0.98) 0%, rgba(20,20,20,0.98) 100%);
       border-radius: 16px;
       padding: 20px;
       border: 1px solid rgba(255,255,255,0.08);
+      animation: cardSlideUp 0.5s cubic-bezier(0.4,0,0.2,1) backwards;
+    }
+    .member-card:nth-child(1) { animation-delay: 0.05s; }
+    .member-card:nth-child(2) { animation-delay: 0.1s; }
+    .member-card:nth-child(3) { animation-delay: 0.15s; }
+    .member-card:nth-child(4) { animation-delay: 0.2s; }
+    .member-card:nth-child(5) { animation-delay: 0.25s; }
+    @keyframes cardSlideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .member-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .member-name { font-size: 20px; font-weight: 800; }
@@ -188,7 +240,18 @@
     
     /* Stats cards */
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 0 16px 16px; }
-    .stat-card { background: rgba(30,30,30,0.95); border-radius: 14px; padding: 18px; border: 1px solid rgba(255,255,255,0.08); }
+    .stat-card { 
+      background: rgba(30,30,30,0.95); 
+      border-radius: 14px; 
+      padding: 18px; 
+      border: 1px solid rgba(255,255,255,0.08);
+      animation: statPop 0.5s cubic-bezier(0.4,0,0.2,1);
+      transform-origin: center;
+    }
+    @keyframes statPop {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
     .stat-card .label { font-size: 10px; color: #777; text-transform: uppercase; margin-bottom: 8px; }
     .stat-card .value { font-size: 24px; font-weight: 800; }
     .stat-card .value.green { color: #1DB954; }
@@ -498,10 +561,17 @@
       });
 
       container.innerHTML = html;
+      
+      // Animar stats cards
+      const statsCards = document.querySelectorAll('.stat-card');
+      statsCards.forEach((card, i) => {
+        card.style.animationDelay = `${i * 0.1}s`;
+      });
+      
       document.getElementById('yearTotalPayments').textContent = totalPayments;
       document.getElementById('yearTotalMonths').textContent = totalMonths;
       document.getElementById('yearBestPayer').textContent = bestPayer;
-      document.getElementById('yearCollected').textContent = (totalMonths * 10.99).toFixed(2) + '€';
+      document.getElementById('yearCollected').textContent = (totalMonths * 3.50).toFixed(2) + '€';
 
       // Gráfica
       setTimeout(() => {
