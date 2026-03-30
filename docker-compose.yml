@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: spotify-payments-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: spotify_payments
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: spotify2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - spotify_network
+
+  # API simple para conectar la web con PostgreSQL
+  api:
+    image: node:20-alpine
+    container_name: spotify-payments-api
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "npm install && npm start"
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://admin:spotify2024@postgres:5432/spotify_payments
+    volumes:
+      - ./api:/app
+    depends_on:
+      - postgres
+    networks:
+      - spotify_network
+
+volumes:
+  postgres_data:
+
+networks:
+  spotify_network:
+    driver: bridge

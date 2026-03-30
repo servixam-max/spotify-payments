@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pago Spotify Familiar</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -94,16 +93,17 @@
     .history { margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
     .history-item { font-size: 12px; color: #666; padding: 5px 0; display: flex; justify-content: space-between; }
     .loading { text-align: center; color: white; padding: 20px; }
-    .setup-notice {
-      background: #fff3cd; border: 2px solid #ffc107;
-      border-radius: 16px; padding: 20px; margin-bottom: 20px;
+    .status-bar {
+      background: rgba(0,0,0,0.2); color: white;
+      padding: 10px; border-radius: 12px; margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center;
     }
-    .setup-notice h3 { color: #856404; margin-bottom: 10px; }
-    .setup-notice p { color: #856404; font-size: 13px; margin-bottom: 10px; }
-    .setup-notice code {
-      background: #fff; padding: 10px; border-radius: 8px;
-      display: block; font-size: 11px; margin: 10px 0;
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block; margin-right: 8px;
     }
+    .status-dot.online { background: #1DB954; }
+    .status-dot.offline { background: #ff4757; }
   </style>
 </head>
 <body>
@@ -112,11 +112,9 @@
     <p>Gestiona los pagos del plan familiar</p>
   </div>
 
-  <div id="setupNotice" class="setup-notice" style="display:none;">
-    <h3>⚠️ Configuración Pendiente</h3>
-    <p>Para guardar los datos en la nube necesitas:</p>
-    <code>1. Crear proyecto en supabase.com<br>2. Copiar URL y API Key<br>3. Pegar en config.js</code>
-    <button class="btn btn-pay" onclick="showConfigModal()">⚙️ Configurar</button>
+  <div class="status-bar">
+    <span><span class="status-dot" id="statusDot"></span><span id="statusText">Conectando...</span></span>
+    <span style="font-size:12px;opacity:0.8" id="serverUrl"></span>
   </div>
 
   <div class="month-selector">
@@ -168,120 +166,69 @@
     </div>
   </div>
 
-  <!-- Modal de configuración -->
-  <div class="modal" id="configModal">
-    <div class="modal-content">
-      <h3>⚙️ Configurar Supabase</h3>
-      <p style="font-size:13px;color:#666;margin-bottom:15px;">
-        1. Ve a <strong>supabase.com</strong><br>
-        2. Crea proyecto gratis<br>
-        3. En SQL Editor ejecuta el script<br>
-        4. Copia URL y API Key
-      </p>
-      <label>Supabase URL</label>
-      <input type="text" id="supabaseUrl" placeholder="https://xxxxx.supabase.co">
-      <label>Supabase API Key (anon)</label>
-      <input type="text" id="supabaseKey" placeholder="eyJhbG...">
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="document.getElementById('configModal').classList.remove('active')">Cerrar</button>
-        <button class="btn-confirm" onclick="saveConfig()">Guardar</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // Configuración
-    let supabase = null;
-    let isConfigured = false;
-    
-    // Cargar config desde localStorage
-    function loadConfig() {
-      const url = localStorage.getItem('supabaseUrl');
-      const key = localStorage.getItem('supabaseKey');
-      if (url && key) {
-        supabase = window.supabase.createClient(url, key);
-        isConfigured = true;
-        return true;
-      }
-      return false;
-    }
-    
-    // Guardar config
-    function saveConfig() {
-      const url = document.getElementById('supabaseUrl').value.trim();
-      const key = document.getElementById('supabaseKey').value.trim();
-      if (url && key) {
-        localStorage.setItem('supabaseUrl', url);
-        localStorage.setItem('supabaseKey', key);
-        supabase = window.supabase.createClient(url, key);
-        isConfigured = true;
-        document.getElementById('configModal').classList.remove('active');
-        document.getElementById('setupNotice').style.display = 'none';
-        loadData();
-      }
-    }
-    
-    // Mostrar modal config
-    function showConfigModal() {
-      const url = localStorage.getItem('supabaseUrl') || '';
-      const key = localStorage.getItem('supabaseKey') || '';
-      document.getElementById('supabaseUrl').value = url;
-      document.getElementById('supabaseKey').value = key;
-      document.getElementById('configModal').classList.add('active');
-    }
+    // Configuración del servidor
+    const API_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:3000/api'
+      : `http://${window.location.hostname}:3000/api`;
 
-    // Datos de los miembros
+    // Estado
     const members = ['Rubén', 'María', 'Litri', 'Kika', 'Gordi'];
     let currentDate = new Date();
     let selectedMember = null;
     let allPayments = [];
+    let isConnected = false;
 
-    // Crear tabla en Supabase
-    async function createTable() {
-      const { error } = await supabase.rpc('create_payments_table');
-      if (error) console.log('Tabla ya existe o error:', error);
-    }
-
-    // Cargar datos desde Supabase
-    async function loadData() {
-      if (!isConfigured) {
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('setupNotice').style.display = 'block';
-        return;
-      }
-
-      document.getElementById('loading').style.display = 'block';
-      
+    // Verificar conexión
+    async function checkConnection() {
       try {
-        const { data, error } = await supabase
-          .from('payments')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        allPayments = data || [];
-        renderMembers();
-      } catch (error) {
-        console.error('Error loading:', error);
-        alert('Error cargando datos: ' + error.message);
+        const res = await fetch(`${API_URL}/payments`);
+        if (res.ok) {
+          isConnected = true;
+          document.getElementById('statusDot').className = 'status-dot online';
+          document.getElementById('statusText').textContent = 'Conectado';
+          document.getElementById('serverUrl').textContent = API_URL;
+          loadData();
+        } else {
+          throw new Error('Server error');
+        }
+      } catch (err) {
+        isConnected = false;
+        document.getElementById('statusDot').className = 'status-dot offline';
+        document.getElementById('statusText').textContent = 'Sin conexión - Verifica que el servidor esté corriendo';
+        document.getElementById('loading').textContent = '❌ No se puede conectar al servidor. Asegúrate de ejecutar: docker-compose up';
       }
-      
-      document.getElementById('loading').style.display = 'none';
     }
 
-    // Guardar pago en Supabase
-    async function savePayment(member, date, months, notes) {
-      const { error } = await supabase
-        .from('payments')
-        .insert([{
-          member: member,
-          payment_date: date,
-          months: months,
-          notes: notes,
-          created_at: new Date().toISOString()
-        }]);
+    // Cargar datos
+    async function loadData() {
+      try {
+        const res = await fetch(`${API_URL}/payments`);
+        if (!res.ok) throw new Error('Error fetching');
+        allPayments = await res.json();
+        renderMembers();
+      } catch (err) {
+        console.error('Error loading:', err);
+      }
+    }
 
-      if (error) throw error;
+    // Guardar pago
+    async function savePayment(member, date, months, notes) {
+      const res = await fetch(`${API_URL}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ member, payment_date: date, months, notes })
+      });
+      if (!res.ok) throw new Error('Error saving');
+      return await res.json();
+    }
+
+    // Borrar pagos de miembro
+    async function deleteMemberPayments(member) {
+      const res = await fetch(`${API_URL}/payments/member/${encodeURIComponent(member)}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Error deleting');
     }
 
     // Formatear fecha
@@ -299,11 +246,8 @@
     function calculateAdvance(memberPayments) {
       let advance = 0;
       const sorted = [...memberPayments].sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
-      
       for (const p of sorted) {
-        if (p.months > 1) {
-          advance += p.months - 1;
-        }
+        if (p.months > 1) advance += p.months - 1;
       }
       return advance;
     }
@@ -458,58 +402,32 @@
         await savePayment(selectedMember, date, months, notes);
         await loadData();
         closeModal();
-      } catch (error) {
-        alert('Error guardando: ' + error.message);
+      } catch (err) {
+        alert('Error guardando: ' + err.message);
       }
     }
 
     // Resetear miembro
     async function resetMember(member) {
       if (confirm(`¿Borrar todos los pagos de ${member}?`)) {
-        const { error } = await supabase
-          .from('payments')
-          .delete()
-          .eq('member', member);
-        
-        if (error) {
-          alert('Error: ' + error.message);
-        } else {
+        try {
+          await deleteMemberPayments(member);
           await loadData();
+        } catch (err) {
+          alert('Error: ' + err.message);
         }
       }
     }
-
-    // SQL para crear tabla (mostrar en config)
-    const createTableSQL = `
--- Crear tabla payments
-CREATE TABLE IF NOT EXISTS payments (
-  id BIGSERIAL PRIMARY KEY,
-  member TEXT NOT NULL,
-  payment_date DATE NOT NULL,
-  months INTEGER NOT NULL DEFAULT 1,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Index para búsquedas rápidas
-CREATE INDEX IF NOT EXISTS idx_payments_member ON payments(member);
-CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date);
-    `;
 
     // Inicializar
     document.getElementById('currentMonth').textContent = 
       currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
-    // Cargar config y datos
-    if (loadConfig()) {
-      loadData();
-    } else {
-      document.getElementById('setupNotice').style.display = 'block';
-      document.getElementById('loading').style.display = 'none';
-      
-      // Guardar SQL en clipboard button
-      console.log('SQL para crear tabla:', createTableSQL);
-    }
+    // Check conexión y cargar datos
+    checkConnection();
+    
+    // Auto-refresh cada minuto
+    setInterval(loadData, 60000);
   </script>
 </body>
 </html>
