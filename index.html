@@ -167,10 +167,9 @@
   </div>
 
   <script>
-    // Configuración del servidor
-    const API_URL = window.location.hostname === 'localhost' 
-      ? 'http://localhost:3000/api'
-      : `http://${window.location.hostname}:3000/api`;
+    // Configuración del servidor - Usar Tailscale IP por defecto
+    const TAILSCALE_IP = '100.126.164.101';
+    const API_URL = `http://${TAILSCALE_IP}:3000/api`;
 
     // Estado
     const members = ['Rubén', 'María', 'Litri', 'Kika', 'Gordi'];
