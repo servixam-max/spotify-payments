@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Spotify Familiar</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1DB954">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Spotify">
+  <link rel="apple-touch-icon" href="/icon-192.png">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1236,6 +1242,142 @@
     document.getElementById('currentMonth').textContent = currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     document.getElementById('currentYear').textContent = currentYear;
     loadData();
+
+    // Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW registrado:', reg.scope))
+          .catch(err => console.log('SW error:', err));
+      });
+    }
+
+    // Detectar si se puede instalar y mostrar banner
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallBanner();
+    });
+
+    function showInstallBanner() {
+      const banner = document.createElement('div');
+      banner.id = 'installBanner';
+      banner.className = 'install-banner';
+      banner.innerHTML = `
+        <div class="banner-content">
+          <span class="banner-icon">📲</span>
+          <div class="banner-text">
+            <strong>Instalar App</strong>
+            <p>Añade Spotify a tu inicio</p>
+          </div>
+          <button class="btn-install" onclick="installApp()">Instalar</button>
+          <button class="btn-dismiss" onclick="dismissBanner()">✕</button>
+        </div>
+      `;
+      document.body.appendChild(banner);
+      
+      // Añadir estilos del banner
+      const style = document.createElement('style');
+      style.textContent = `
+        .install-banner {
+          position: fixed;
+          bottom: 80px;
+          left: 16px;
+          right: 16px;
+          background: linear-gradient(135deg, rgba(40,40,40,0.98) 0%, rgba(18,18,18,0.98) 100%);
+          backdrop-filter: blur(30px);
+          -webkit-backdrop-filter: blur(30px);
+          border-radius: 20px;
+          padding: 16px;
+          border: 1px solid rgba(255,255,255,0.15);
+          box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+          z-index: 1000;
+          animation: slideUpBanner 0.4s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes slideUpBanner {
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .banner-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .banner-icon {
+          font-size: 32px;
+          flex-shrink: 0;
+        }
+        .banner-text {
+          flex: 1;
+        }
+        .banner-text strong {
+          display: block;
+          color: #fff;
+          font-size: 14px;
+          margin-bottom: 2px;
+        }
+        .banner-text p {
+          color: #888;
+          font-size: 12px;
+          margin: 0;
+        }
+        .btn-install {
+          background: linear-gradient(135deg, #1DB954 0%, #1ed760 100%);
+          color: #000;
+          border: none;
+          padding: 10px 18px;
+          border-radius: 12px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+        .btn-install:active { transform: scale(0.95); }
+        .btn-dismiss {
+          background: transparent;
+          border: none;
+          color: #666;
+          font-size: 20px;
+          cursor: pointer;
+          padding: 4px 8px;
+          flex-shrink: 0;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    async function installApp() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        dismissBanner();
+      }
+      deferredPrompt = null;
+    }
+
+    function dismissBanner() {
+      const banner = document.getElementById('installBanner');
+      if (banner) {
+        banner.style.animation = 'slideDownBanner 0.3s ease forwards';
+        setTimeout(() => banner.remove(), 300);
+      }
+      
+      const style = document.querySelector('style[data-banner-style]');
+      if (style) style.remove();
+    }
+
+    // Añadir animación de dismiss
+    const dismissStyle = document.createElement('style');
+    dismissStyle.setAttribute('data-banner-style', '');
+    dismissStyle.textContent = `
+      @keyframes slideDownBanner {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(40px); }
+      }
+    `;
+    document.head.appendChild(dismissStyle);
   </script>
 </body>
 </html>
